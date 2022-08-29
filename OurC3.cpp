@@ -7,6 +7,7 @@
 # include <iomanip>
 # include <stack>
 # include <queue>
+# include <sstream>
 
 using namespace std;
 
@@ -62,6 +63,22 @@ void ReadLine() {
     
   } // while
 } // ReadLine()
+
+string FloatToStr( float num ) {
+  stringstream ss;
+  ss << fixed << setprecision(3) << num;
+  string str = ss.str();
+  return str;
+} // FloatToStr() 
+
+string IntToStr( int num ) {
+  
+  stringstream ss;
+  ss << num;
+  string str = ss.str();
+  return str;
+
+} // IntToStr()
 
 enum TokenType {
   ID, CONSTANT, UNDEFINED_TYPE, 
@@ -521,8 +538,6 @@ public:
       DetermineTokenType( token );
     } // else
 
-    
-
     return getTokenSuces;
   } // GetToken()
 
@@ -544,19 +559,23 @@ public:
 
 }; // TokenScanner
 
+enum DataType {
+  VOID_TYPE, INT_TYPE, FLOAT_TYPE, 
+  BOOL_TYPE, STRING_TYPE, CHAR_TYPE
+};
+
 class Data {
 public:
   // type: int, float, bool, string, char, void
-  string mType;
-  
-  // variable or function
-  bool mIsVar, mIsFunc;
-  
+  DataType mType;
+
   // value
-  float mVal; // int, float, bool
-  string mStrVal; // string, char
+  string mVal; // string, char, int, float, bool
   vector<string> mBody; // function body or variable '[]' part
   
+  // is variable or function
+  bool mIsVar, mIsFunc;
+
   Data() {
     Init();
   } // Data()
@@ -565,39 +584,156 @@ public:
   } // ~Data()
 
   void Init() {
-    mType = "";
+    mType = VOID_TYPE;
     mIsVar = false;
     mIsFunc = false;
-    mVal = 0.0;
-    mStrVal = "";
+    mVal = "";
   } // Init()
 
-  void SetByConstantToken( string constant ) {
-    if( constant[0] == '\"' ) {
-      mType = "string";
-      mStrVal = constant.substr( 1, constant.size() - 2 );
+  bool IsEmpty() {
+    if ( mType == VOID_TYPE && mIsVar == false && mIsFunc == false
+         && mVal == "" ) {
+      return true;
+    } // if 
+
+    return false;
+  } // IsEmpty()
+
+  void SetByConstantToken( string token ) {
+    if( token[0] == '\"' ) {
+      mType = STRING_TYPE;
+      mVal = token.substr( 1, token.size() - 2 );
     } // if
-    else if ( constant[0] == '\'' ) {
-      mType = "char";
-      mStrVal = constant.substr( 1, constant.size() - 2 );
+    else if ( token[0] == '\'' ) {
+      mType = CHAR_TYPE;
+      mVal = token.substr( 1, token.size() - 2 );
     } // if
-    else if ( constant == "true" || constant == "false" ) {
-      mType = "bool";
-      if ( constant == "true" ) {
-        mVal = 1;
+    else if ( token == "true" || token == "false" ) {
+      mType = BOOL_TYPE;
+      mVal = token;
+    } // if
+    else if ( isdigit( token[0] ) || token[0] == '.' || token[0] == '-' ) {
+      if ( token.find( '.' ) != string::npos) {
+        mType = FLOAT_TYPE;
+        float tmp = atof( token.c_str() );
+        mVal = FloatToStr( tmp );
       } // if
       else {
-        mVal = 0;
+        mType = INT_TYPE;
+        mVal = token;
       } // else
     } // if
-    else if ( ( constant[0] >= '0' && constant[0] <= '9' ) || constant[0] == '.' ) {
-      mVal = atof( constant.c_str() );
-      mType = "int";
-      if ( constant.find( '.' ) != string::npos) {
-        mType = "float";
-      } // if
-    } // if
   } // SetByConstant()
+
+  Data Plus( Data op2 ) {
+    // acceptable type: int, float, string(with anything)
+    Data returnValue;
+    if ( mType == STRING_TYPE || op2.mType == STRING_TYPE ) {
+      returnValue.mType = STRING_TYPE;
+      // float accuracy display problem
+      returnValue.mVal = mVal + op2.mVal;
+    } // if
+    else if ( mType == INT_TYPE || mType == FLOAT_TYPE ) {
+      float value1 = 0.0, value2 = 0.0;
+    
+      value1 = atof( mVal.c_str() );
+      value2 = atof( op2.mVal.c_str() );
+      value1 = value1 + value2;
+
+      if ( IsInt( value1 ) ) {
+        returnValue.mType = INT_TYPE;
+        returnValue.mVal = IntToStr( (int)value1 ); 
+      } // if
+      else {
+        returnValue.mType = FLOAT_TYPE;
+        returnValue.mVal = FloatToStr( value1 );
+      } // else
+    } // if
+
+    return returnValue;
+  } // Plus()
+
+  Data Minus( Data op2 ) {
+    // acceptable type: int, float
+    Data returnValue;
+    if ( mType == INT_TYPE || mType == FLOAT_TYPE ) {
+      float value1 = 0.0, value2 = 0.0;
+    
+      value1 = atof( mVal.c_str() );
+      value2 = atof( op2.mVal.c_str() );
+      value1 = value1 - value2;
+
+      if ( IsInt( value1 ) ) {
+        returnValue.mType = INT_TYPE;
+        returnValue.mVal = IntToStr( (int)value1 ); 
+      } // if
+      else {
+        returnValue.mType = FLOAT_TYPE;
+        returnValue.mVal = FloatToStr( value1 );
+      } // else
+    } // if
+
+    return returnValue;
+  } // Minus()
+
+  Data Mul( Data op2 ) {
+    // multiply this instance with the argument( op2 )
+    Data returnValue;
+    float value1 = 0.0, value2 = 0.0;
+    
+    value1 = atof( mVal.c_str() );
+    value2 = atof( op2.mVal.c_str() );
+    value1 = value1 * value2;
+
+    if ( mType == FLOAT_TYPE || op2.mType == FLOAT_TYPE ) {
+      returnValue.mType = FLOAT_TYPE;
+      returnValue.mVal = FloatToStr( value1 );
+    } // if
+    else {
+      returnValue.mType = INT_TYPE;
+      returnValue.mVal = IntToStr( (int)value1 ); 
+    } // else
+
+    // returnValue.mVal = mVal * value.mVal;
+    return returnValue;
+  } // Mul()
+
+  Data Div( Data op2 ) {
+    // divide this instance with the argument( op2 )
+    Data returnValue;
+    float value1 = 0.0, value2 = 0.0;
+    
+    value1 = atof( mVal.c_str() );
+    value2 = atof( op2.mVal.c_str() );
+    value1 = value1 / value2;
+
+    if ( IsInt( value1 ) ) {
+      returnValue.mType = INT_TYPE;
+      returnValue.mVal = IntToStr( (int)value1 ); 
+    } // if
+    else {
+      returnValue.mType = FLOAT_TYPE;
+      returnValue.mVal = FloatToStr( value1 );
+    } // else
+
+    return returnValue;
+  } // Div()
+
+  Data Mod( Data op2 ) {
+    // mod this instance with the argument( op2 )
+    Data returnValue;
+    int value1 = 0, value2 = 0;
+    
+    value1 = atoi( mVal.c_str() );
+    value2 = atoi( op2.mVal.c_str() );
+    value1 = value1 % value2;
+  
+    returnValue.mType = INT_TYPE;
+    returnValue.mVal = IntToStr( (int)value1 ); 
+
+    return returnValue;
+  } // Div()
+
 }; // Data
 
 class CallStack {
@@ -659,13 +795,47 @@ public:
     } // if
   } // Get()
 
+  void Set( string name, Data& data ) {
+    if ( !mCallStack->empty() ) {
+      map<string, Data> m = mCallStack->top() ;
+      mCallStack->pop();
+      if ( m.find( name ) != m.end() ) {
+        m[name].mVal = data.mVal;
+      } // if
+      else {
+        Set( name, data );
+      } // else
+
+      mCallStack->push( m );
+    } // if
+  } // Set()
+
   void NewID( string token, vector<Token>* tokenStr ) {
     map<string, Data> m = mCallStack->top();
     mCallStack->pop();
 
     Data d;
     d.mIsVar = true;
-    d.mType = tokenStr->at( 0 ).mValue;
+    // d.mType = tokenStr->at( 0 ).mValue;
+    if ( tokenStr->at( 0 ).mValue == "int" ) {
+      d.mType = INT_TYPE;
+    } // if
+    else if ( tokenStr->at( 0 ).mValue == "float" ) {
+      d.mType = FLOAT_TYPE;
+    } // if
+    else if ( tokenStr->at( 0 ).mValue == "bool" ) {
+      d.mType = BOOL_TYPE;
+    } // if
+    else if ( tokenStr->at( 0 ).mValue == "string" ) {
+      d.mType = STRING_TYPE;
+    } // if
+    else if ( tokenStr->at( 0 ).mValue == "char" ) {
+      d.mType = CHAR_TYPE;
+    } // if
+    else if ( tokenStr->at( 0 ).mValue == "void" ) {
+      d.mType = VOID_TYPE;
+    } // if
+
     int i = 0;
     while ( i < tokenStr->size() ) {
       if ( tokenStr->at( i ).mValue == token ) {
@@ -703,7 +873,25 @@ public:
     mCallStack->pop();
     Data d;
     
-    d.mType = tokenStr->at( 0 ).mValue;
+    if ( tokenStr->at( 0 ).mValue == "int" ) {
+      d.mType = INT_TYPE;
+    } // if
+    else if ( tokenStr->at( 0 ).mValue == "float" ) {
+      d.mType = FLOAT_TYPE;
+    } // if
+    else if ( tokenStr->at( 0 ).mValue == "bool" ) {
+      d.mType = BOOL_TYPE;
+    } // if
+    else if ( tokenStr->at( 0 ).mValue == "string" ) {
+      d.mType = STRING_TYPE;
+    } // if
+    else if ( tokenStr->at( 0 ).mValue == "char" ) {
+      d.mType = CHAR_TYPE;
+    } // if
+    else if ( tokenStr->at( 0 ).mValue == "void" ) {
+      d.mType = VOID_TYPE;
+    } // if
+
     d.mIsFunc = true;
     // get function body
     for ( int i = 2 ; i < tokenStr->size() ; i++ ) {
@@ -832,17 +1020,806 @@ public:
 
 CallStack* gCallStack;
 
+class Evaler {
+  // eval the token string
+public:
+  vector<Token> mTokenStr;
+  int i;
+  
+  Evaler() {
+    i = 0;
+  } // Evaler
+
+  void Statement() {
+    i = 0;
+    Data value;
+    if ( Expression( value ) ) {
+      
+    } // if
+    // else if if, while ...
+  } // Statement()
+
+  bool Expression( Data& value ) {
+    // basic_expression { ',' basic_expression }
+    if ( !Basic_expression( value ) ) {
+      return false;
+    } // if
+
+    /*
+    while ( mTokenStr[i].mValue == "," ) {
+      i++;
+      Basic_expression();
+
+    } // while
+    */
+    return true;
+  } // Expression()
+
+  bool Basic_expression( Data& value ) {
+    // value only out?
+    string idStr = "", signStr = "";
+    
+    if ( mTokenStr[i].mType == ID ) {
+      // Identifier rest_of_Identifier_started_basic_exp
+      idStr = mTokenStr[i].mValue;
+      i++;
+      
+      if ( mTokenStr[i].mValue == "[" ) {
+        // [ '[' expression ']' ]
+        i++;
+        Data exprVal2;
+        Expression( exprVal2 );
+
+        // if ( token.mValue != "]" ) {
+        i++;
+      } // if
+
+      if ( idStr == "cout" ) {
+        while ( mTokenStr[i].mType == LS || mTokenStr[i].mType == RS ) {
+          i++;
+          Maybe_additive_exp( value ) ;
+          while ( value.mVal.find( "\\n" ) != string::npos ) {
+            value.mVal.replace( value.mVal.find( "\\n" ), 2, "\n" );
+          } // while
+          cout << value.mVal;
+        } // while
+        
+        return true;
+      } // if
+      else if ( mTokenStr[i].mValue == "=" || mTokenStr[i].mType == TE || mTokenStr[i].mType == DE
+          || mTokenStr[i].mType == RE || mTokenStr[i].mType == PE || mTokenStr[i].mType == ME ) {
+        // assignment_operator
+        Token assignOp = mTokenStr[i];
+        i++;
+
+        Basic_expression( value );
+        
+        Data idVal;
+        gCallStack->Get( idStr, idVal );
+        if ( assignOp.mType == TE ) {
+          // *=
+          value = idVal.Mul( value );
+        } // if
+        else if ( assignOp.mType == DE ) {
+          // /=
+          value = idVal.Div( value );
+        } // if
+        else if ( assignOp.mType == RE ) {
+          // %=
+          value = idVal.Mod( value );
+        } // if
+        else if ( assignOp.mType == PE ) {
+          // +=
+          value = idVal.Plus( value );
+        } // if
+        else if ( assignOp.mType == ME ) {
+          // /=
+          value = idVal.Minus( value );
+        } // if
+
+        gCallStack->Set( idStr, value );
+
+        return true;
+      } // if
+      else {
+        gCallStack->Get( idStr, value );
+        Data tmpD;
+        tmpD.SetByConstantToken( "1" );
+        if ( mTokenStr[i].mType == PP ) {
+          value = value.Plus( tmpD ); 
+          gCallStack->Set( idStr, value );
+          i++;
+        } // if
+        else if ( mTokenStr[i].mType == MM ) {
+          value = value.Minus( tmpD );
+          gCallStack->Set( idStr, value );
+          i++;
+        } // if
+
+        Rest_of_maybe_conditional_exp_and_rest_of_maybe_logical_OR_exp( value );
+      } // else
+
+      return true;
+    } // if ( mTokenStr[i].mType == ID )
+    else if ( mTokenStr[i].mType == PP || mTokenStr[i].mType == MM ) {
+      i++;
+      if ( mTokenStr[i].mType == ID ) {
+        idStr = mTokenStr[i].mValue;
+        i++;
+
+        gCallStack->Get( idStr, value );
+        Data tmpD;
+        tmpD.SetByConstantToken( "1" );
+        if ( mTokenStr[i-2].mType == PP ) {
+          value = value.Plus( tmpD );
+          gCallStack->Set( idStr, value );
+        } // if
+        else {
+          value = value.Minus( tmpD );
+          gCallStack->Set( idStr, value );
+        } // else
+        
+        // [ '[' expression ']' ] romce_and_romloe
+        Data exprVal2;
+        if ( mTokenStr[i].mValue == "[" ) {
+          i++;
+
+          Expression( exprVal2 );
+
+          i++; // if ( token.mValue == "]" ) {
+
+          return true;
+        } // if
+
+        Rest_of_maybe_conditional_exp_and_rest_of_maybe_logical_OR_exp( value ) ;
+          
+        return true;
+      } // if
+
+
+    } // if
+    else if ( Sign( signStr ) ) {
+      while ( Sign( signStr ) ) {
+
+      } // while
+
+      if ( Signed_unary_exp( value )  ) {
+
+      } // if
+      else if ( Rest_of_maybe_conditional_exp_and_rest_of_maybe_logical_OR_exp( value ) ) {
+
+      } // if
+
+      if ( signStr == "!" ) {
+        if ( value.mVal == "true" ) {
+          value.mVal = "false";
+        } // if
+        else {
+          value.mVal = "true";
+        } // else
+      } // if
+      else if ( signStr == "-" ) {
+        Data tmpD;
+        tmpD.SetByConstantToken( "-1" );
+        value = value.Mul( tmpD ); 
+      } // if
+
+      return true;
+    } // if
+    else if ( mTokenStr[i].mType == CONSTANT || mTokenStr[i].mValue == "(" ) {
+      // ( Constant | '(' expression ')' ) romce_and_romloe
+      if ( mTokenStr[i].mValue == "(" ) {
+        i++;
+
+        Expression( value );
+
+        // if ( tokenStr[i].mValue == ")" ) {
+        i++;
+
+      } // if ( token.mValue == "(" )
+      else {
+        value.SetByConstantToken( mTokenStr[i].mValue );
+        i++;
+      } // else
+
+      Rest_of_maybe_conditional_exp_and_rest_of_maybe_logical_OR_exp( value ) ;
+      return true;
+    } // else if
+
+    return false;
+  } // Basic_expression()
+
+  bool Sign( string& signStr ) {
+    if ( mTokenStr[i].mValue == "+" || mTokenStr[i].mValue == "-" || mTokenStr[i].mValue == "!" ) {
+      if (  mTokenStr[i].mValue == "-" ) {
+        if ( signStr == "-" ) {
+          signStr = "+";
+        } // if
+        else {
+          signStr = "-";
+        } // else
+      } // if
+      else if ( signStr == "!" && mTokenStr[i].mValue == "!" ) {
+        signStr = "";
+      } // if
+      else if ( signStr == "" ) {
+        signStr = mTokenStr[i].mValue;
+      } // else
+
+      i++;
+      return true;
+    } // if
+    
+    return false;
+  } // Sign()
+
+  
+
+  bool Rest_of_maybe_conditional_exp_and_rest_of_maybe_logical_OR_exp( Data& value ) {
+    //  rest_of_maybe_logical_OR_exp [ '?' basic_expression ':' basic_expression ]
+    if ( !Rest_of_maybe_logical_OR_exp( value ) ) {
+      return false;
+    } // if
+
+    Data bExprVal1, bExprVal2;
+    if ( mTokenStr[i].mValue == "?" ) {
+      i++;
+
+      if ( Basic_expression( bExprVal1 ) ) {
+
+        if ( mTokenStr[i].mValue == ":" ) {
+          i++;
+
+          if ( Basic_expression( bExprVal2 ) ) {
+            return true;
+          } // if
+        } // if
+      } // if
+    } // if ( token.mValue == "?" )
+
+    return true;
+  } // Rest_of_maybe_conditional_exp_and_rest_of_maybe_logical_OR_exp()
+
+  bool Rest_of_maybe_logical_OR_exp( Data& value ) {
+    // rest_of_maybe_logical_AND_exp { OR maybe_logical_AND_exp }
+    if ( !Rest_of_maybe_logical_AND_exp( value ) ) {
+      return false;
+    } // if
+
+    Data value2;
+    while ( mTokenStr[i].mType == OR ) {
+      i++;
+
+      Maybe_logical_AND_exp( value2 );
+        
+
+    } // while
+
+    return true;
+  } // Rest_of_maybe_logical_OR_exp()
+
+  bool Maybe_logical_AND_exp( Data& value ) {
+    // maybe_bit_OR_exp { AND maybe_bit_OR_exp }
+    if ( !Maybe_bit_OR_exp( value ) ) {
+      return false;
+    } // if
+
+    Data value2;
+    while ( mTokenStr[i].mType == AND ) {
+      i++;
+      
+      Maybe_bit_OR_exp( value2 );
+    } // while
+
+    return true;
+  } // Maybe_logical_AND_exp()
+
+  bool Rest_of_maybe_logical_AND_exp( Data& value ) {
+    if ( !Rest_of_maybe_bit_OR_exp( value ) ) {
+      return false;
+    } // if
+
+    Data value2;
+    while ( mTokenStr[i].mType == AND ) {
+      i++;
+
+      Maybe_bit_OR_exp( value2 ) ;
+    } // while
+
+    return true;
+  } // Rest_of_maybe_logical_AND_exp()
+
+  bool Maybe_bit_OR_exp( Data& value ) {
+    if ( !Maybe_bit_ex_OR_exp( value ) ) {
+      return false;
+    } // if
+
+    Data value2;
+    while ( mTokenStr[i].mValue == "|" ) {
+      i++;
+
+      Maybe_bit_ex_OR_exp( value2 ) ;
+    } // while
+
+    return true;
+  } // Maybe_bit_OR_exp()
+
+  bool Rest_of_maybe_bit_OR_exp( Data& value ) {
+    if ( !Rest_of_maybe_bit_ex_OR_exp( value ) ) {
+      return false;
+    } // if
+
+    Data value2;
+    while ( mTokenStr[i].mValue == "|" ) {
+      i++;
+
+     Maybe_bit_ex_OR_exp( value2 );
+
+    } // while
+
+    return true;
+  } // Rest_of_maybe_bit_OR_exp()
+
+  bool Maybe_bit_ex_OR_exp( Data& value ) {
+    if ( !Maybe_bit_AND_exp( value ) ) {
+      return false;
+    } // if
+
+    Data value2;
+    while ( mTokenStr[i].mValue == "^" ) {
+      i++;
+
+      Maybe_bit_AND_exp( value2 );
+
+    } // while
+
+    return true;
+  } // Maybe_bit_ex_OR_exp()
+
+  bool Rest_of_maybe_bit_ex_OR_exp( Data& value ) {
+    if ( !Rest_of_maybe_bit_AND_exp( value ) ) {
+      return false;
+    } // if
+
+    Data value2;
+    while ( mTokenStr[i].mValue == "^" ) {
+      i++;
+
+      Maybe_bit_AND_exp( value2 );
+
+    } // while
+
+    return true;
+  } // Rest_of_maybe_bit_ex_OR_exp()
+
+  bool Maybe_bit_AND_exp( Data& value ) {
+    if ( !Maybe_equality_exp( value ) ) {
+      return false;
+    } // if
+
+    Data value2;
+    while ( mTokenStr[i].mValue == "&" ) {
+      i++;
+
+      Maybe_equality_exp( value2 ) ;
+
+   
+    } // while
+
+    return true;
+  } // Maybe_bit_AND_exp()
+
+  bool Rest_of_maybe_bit_AND_exp( Data& value ) {
+    if ( !Rest_of_maybe_equality_exp( value ) ) {
+      return false;
+    } // if
+
+    Data value2;
+    while ( mTokenStr[i].mValue == "&" ) {
+      i++;
+
+      Maybe_equality_exp( value2 ) ;
+  
+
+    } // while
+
+    return true;
+  } // Rest_of_maybe_bit_AND_exp()
+
+  bool Maybe_equality_exp( Data& value ) {
+    if ( !Maybe_relational_exp( value ) ) {
+      return false;
+    } // if
+
+    Data value2;
+    while ( mTokenStr[i].mType == EQ || mTokenStr[i].mType == NEQ ) {
+      i++;
+      Maybe_relational_exp( value2 ) ;
+
+    
+    } // while
+
+    return true;
+  } // Maybe_equality_exp()
+
+  bool Rest_of_maybe_equality_exp( Data& value ) {
+    if ( !Rest_of_maybe_relational_exp( value ) ) {
+      return false;
+    } // if
+
+    Data value2;
+    while ( mTokenStr[i].mType == EQ || mTokenStr[i].mType == NEQ ) {
+      i++;
+
+      Maybe_relational_exp( value2 ) ;
+
+   
+    } // while
+
+    return true;
+  } // Rest_of_maybe_equality_exp()
+
+  bool Maybe_relational_exp( Data& value ) {
+    if ( !Maybe_shift_exp( value ) ) {
+      return false;
+    } // if
+
+    Data value2;
+    while ( mTokenStr[i].mType == LE || mTokenStr[i].mType == GE
+            || mTokenStr[i].mValue == "<" || mTokenStr[i].mValue == ">" ) {
+      i++;
+
+      Maybe_shift_exp( value2 ) ;
+
+     
+    } // while
+
+    return true;
+  } // Maybe_relational_exp()
+
+  bool Rest_of_maybe_relational_exp( Data& value ) {
+    if ( !Rest_of_maybe_shift_exp( value ) ) {
+      return false;
+    } // if
+
+    Data value2;
+    while ( mTokenStr[i].mType == LE || mTokenStr[i].mType == GE
+            || mTokenStr[i].mValue == "<" || mTokenStr[i].mValue == ">" ) {
+      i++;
+
+      Maybe_shift_exp( value2 ) ;
+
+    
+    } // while
+
+    return true;
+  } // Rest_of_maybe_relational_exp()
+
+  bool Maybe_shift_exp( Data& value ) {
+    if ( !Maybe_additive_exp( value ) ) {
+      return false;
+    } // if
+
+    Data value2;
+    while ( mTokenStr[i].mType == LS || mTokenStr[i].mType == RS ) {
+      if (  mTokenStr[i].mType == LS ) {
+        // <<
+        i++;
+        Maybe_additive_exp( value2 );
+        value.mVal = IntToStr( atoi( value.mVal.c_str() ) << atoi( value2.mVal.c_str() ) );
+      } // if
+      else {
+        // >>
+        i++;
+        Maybe_additive_exp( value2 );
+        value.mVal = IntToStr( atoi( value.mVal.c_str() ) >> atoi( value2.mVal.c_str() ) );
+      } // else
+      
+    } // while
+
+    return true;
+  } // Maybe_shift_exp()
+
+  bool Rest_of_maybe_shift_exp( Data& value ) {
+    if ( !Rest_of_maybe_additive_exp( value ) ) {
+      return false;
+    } // if
+
+    Data value2;
+    while ( mTokenStr[i].mType == LS || mTokenStr[i].mType == RS ) {
+      if (  mTokenStr[i].mType == LS ) {
+        // <<
+        i++;
+        Maybe_additive_exp( value2 );
+        value.mVal = IntToStr( atoi( value.mVal.c_str() ) << atoi( value2.mVal.c_str() ) );
+      } // if
+      else {
+        // >>
+        i++;
+        Maybe_additive_exp( value2 );
+        value.mVal = IntToStr( atoi( value.mVal.c_str() ) >> atoi( value2.mVal.c_str() ) );
+      } // else
+    } // while
+
+    return true;
+  } // Rest_of_maybe_shift_exp()
+
+  bool Maybe_additive_exp( Data& value ) {
+    if ( !Maybe_mult_exp( value ) ) {
+      return false;
+    } // if
+
+    Data value2;
+    while ( mTokenStr[i].mValue == "+" || mTokenStr[i].mValue == "-" ) {
+      if ( mTokenStr[i].mValue == "+" ) {
+        i++;
+        Maybe_mult_exp( value2 );
+        value = value.Plus( value2 );
+      } // if
+      else {
+        i++;
+        Maybe_mult_exp( value2 );
+        value = value.Minus( value2 );
+      } // else
+    } // while
+
+    return true;
+  } // Maybe_additive_exp()
+
+  bool Rest_of_maybe_additive_exp( Data& value ) {
+    if ( !Rest_of_maybe_mult_exp( value ) ) {
+      return false;
+    } // if
+
+    Data value2;
+    string optr = "";
+    while ( mTokenStr[i].mValue == "+" || mTokenStr[i].mValue == "-" ) {
+      optr = mTokenStr[i].mValue;
+      i++;
+      
+      Maybe_mult_exp( value2 );
+
+      if ( optr == "+" ) {
+        value = value.Plus( value2 );
+      } // if
+      else {
+        value = value.Minus( value2 );
+      } // if      
+    } // while
+
+    return true;
+  } // Rest_of_maybe_additive_exp()
+
+  bool Maybe_mult_exp( Data& value ) {
+    if ( Unary_exp( value ) ) {
+      Rest_of_maybe_mult_exp( value ); 
+      return true;
+    } // if
+
+    return false;
+  } // Maybe_mult_exp()
+
+  bool Rest_of_maybe_mult_exp( Data& value ) {
+    string operatorToken = "";
+    Data value2;
+
+    while ( mTokenStr[i].mValue == "*" || mTokenStr[i].mValue == "/"
+            || mTokenStr[i].mValue == "%" ) {
+      operatorToken = mTokenStr[i].mValue;
+      i++;
+
+      Unary_exp( value2 ) ;
+
+      // value must be numeric?
+      if ( operatorToken == "*" ) {
+        value = value.Mul( value2 );
+      } // if
+      else if ( operatorToken == "/" ) {
+        value = value.Div( value2 );
+      } // if
+      else if ( operatorToken == "%" ) {
+        value = value.Mod( value2 );
+      } // if
+    } // while
+
+    return true;
+  } // Rest_of_maybe_mult_exp()
+
+  bool Unary_exp( Data& value ) {
+    /*
+    sign { sign } signed_unary_exp
+    | unsigned_unary_exp
+    | ( PP | MM ) Identifier [ '[' expression ']' ]
+    */
+    string signStr = "";
+
+    if ( Sign( signStr ) ) {
+      while ( Sign( signStr ) ) {
+
+      } // while
+
+      Signed_unary_exp( value ) ;
+
+      if ( signStr == "!" ) {
+        if ( value.mVal == "true" ) {
+          value.mVal = "false";
+        } // if
+        else {
+          value.mVal = "true";
+        } // else
+      } // if
+      else if ( signStr == "-" ) {
+        Data tmpD;
+        tmpD.SetByConstantToken( "-1" );
+        value = value.Mul( tmpD ); 
+      } // if
+      
+      return true;
+    } // if
+    else if ( Unsigned_unary_exp( value ) ) {
+      return true;
+    } // if
+    else if ( mTokenStr[i].mType == PP || mTokenStr[i].mType == MM ) {
+      Token tmp = mTokenStr[i];
+      i++;
+      if ( mTokenStr[i].mType == ID ) {
+        string idStr = mTokenStr[i].mValue;
+        i++;
+        if ( mTokenStr[i].mValue == "[" ) {
+          i++;
+          Data exprVal2;
+          if ( Expression( exprVal2 ) ) {
+            
+            if ( mTokenStr[i].mValue == "]" ) {
+              i++;
+              return true;
+            } // if
+          } // if
+
+        } // if ( mTokenStr[i].mValue == "[" )
+        else {
+          gCallStack->Get( idStr, value );
+          Data tmpD;
+          tmpD.SetByConstantToken( "1" );
+          if ( tmp.mType == PP ) {
+            value = value.Plus( tmpD );
+            gCallStack->Set( idStr, value );
+          } // if
+          else {
+            value = value.Minus( tmpD );
+            gCallStack->Set( idStr, value );
+          } // else
+
+          return true;
+        } // else
+      } // if
+
+    } // if
+
+    return false;
+  } // Unary_exp()
+
+  bool Signed_unary_exp( Data& value ) {
+    /*
+      Identifier [ '(' [ actual_parameter_list ] ')'
+                    |
+                    '[' expression ']'
+                  ]
+      | Constant
+      | '(' expression ')'
+    */
+    Data exprVal;
+    if ( mTokenStr[i].mType == ID ) {
+      string idStr = mTokenStr[i].mValue;
+      i++;
+      if ( mTokenStr[i].mValue == "[" ) {
+        i++;
+        Expression( exprVal ) ;   
+        i++; // if ( mTokenStr[i].mValue == "]" )
+      } // if
+      
+      gCallStack->Get( idStr, value );
+      return true;
+    } // if ( mTokenStr[i].mType == ID )
+    else if ( mTokenStr[i].mType == CONSTANT ) {
+      value.SetByConstantToken( mTokenStr[i].mValue );
+      i++;
+      return true;
+    } // if
+    else if ( mTokenStr[i].mValue == "(" ) {
+      i++;
+
+      if ( Expression( value ) ) {
+
+        if ( mTokenStr[i].mValue == ")" ) {
+          i++;
+          return true;
+        } // if
+      } // if
+
+
+    } // else if
+
+    return false;
+  } // Signed_unary_exp()
+
+  bool Unsigned_unary_exp( Data& value ) {
+    /*    
+    Identifier [ '(' [ actual_parameter_list ] ')'
+                 |
+                 [ '[' expression ']' ] [ ( PP | MM ) ]
+               ]
+    | Constant
+    | '(' expression ')'
+    */
+    Data exprVal2;
+    if ( mTokenStr[i].mType == ID ) {
+      string idStr = "";
+      idStr = mTokenStr[i].mValue;
+      i++;
+
+      if ( mTokenStr[i].mValue == "[" ) {
+        i++;
+
+        Expression( exprVal2 ) ;
+
+        i++; // if ( token.mValue != "]" ) 
+
+      } // if ( token.mValue == "[" )
+
+      gCallStack->Get( idStr, value );
+      if ( mTokenStr[i].mType == PP || mTokenStr[i].mType == MM ) {
+        Data tmpD;
+        tmpD.SetByConstantToken( "1" );
+        if ( mTokenStr[i].mType == PP ) {
+          value = value.Plus( tmpD ); 
+          gCallStack->Set( idStr, value );
+          i++;
+        } // if
+        else if ( mTokenStr[i].mType == MM ) {
+          value = value.Minus( tmpD );
+          gCallStack->Set( idStr, value );
+          i++;
+        } // if
+        
+      } // if 
+    
+      return true;
+    } // if
+    else if ( mTokenStr[i].mType == CONSTANT ) {
+      value.SetByConstantToken( mTokenStr[i].mValue );
+      i++;
+    
+      return true;
+    } // else if
+    else if ( mTokenStr[i].mValue == "(" ) {
+      i++;
+      
+      if ( Expression( value ) ) {
+       
+        if ( mTokenStr[i].mValue == ")" ) {
+          i++;
+          return true;
+        } // if
+      } // if 
+    } // else if
+
+    return false;
+  } // Unsigned_unary_exp()
+  
+}; // class Evaler
+
 class Parser {
 public:
   TokenScanner mScanner;
   vector<Token>* mTokenString;
   int mInstructionNum;
-  bool mEvalMode;
+  Evaler evaler;
 
   Parser() {
     mTokenString = new vector<Token>();
     mInstructionNum = 0;
-    mEvalMode = false;
+    
   } // Parser()
 
   ~Parser() {
@@ -866,6 +1843,8 @@ public:
 
     } // if
     else if ( Statement() ) {
+      evaler.mTokenStr = *mTokenString;
+      evaler.Statement();
       cout << "Statement executed ...\n";
     } // if
     else {
@@ -892,6 +1871,8 @@ public:
         mScanner.CleanInputAfterCMD();
       } // if
       else if ( Statement() ) {
+        evaler.mTokenStr = *mTokenString;
+        evaler.Statement();
         cout << "Statement executed ...\n";
         mScanner.CleanInputAfterCMD();
       } // if
@@ -1306,7 +2287,7 @@ public:
       firstTokenMatch = true;
       success = true;
     } // if
-    else if ( Expression( value ) ) {
+    else if ( Expression(  ) ) {
       firstTokenMatch = true;
       mScanner.PeekToken( token );
       if ( token.mValue == ";" ) {
@@ -1321,7 +2302,7 @@ public:
       mTokenString->push_back( token );
       firstTokenMatch = true;
 
-      Expression( value );
+      Expression(  );
       
       mScanner.PeekToken( token );
       if ( token.mValue == ";" ) {
@@ -1341,7 +2322,7 @@ public:
         mScanner.GetToken( token );
         mTokenString->push_back( token );
 
-        if ( Expression( value ) ) {
+        if ( Expression(  ) ) {
           mScanner.PeekToken( token );
           if ( token.mValue == ")" ) {
             mScanner.GetToken( token );
@@ -1377,7 +2358,7 @@ public:
         mScanner.GetToken( token );
         mTokenString->push_back( token );
 
-        if ( Expression( value ) ) {
+        if ( Expression(  ) ) {
           mScanner.PeekToken( token );
           if ( token.mValue == ")" ) {
             mScanner.GetToken( token );
@@ -1407,7 +2388,7 @@ public:
             mScanner.GetToken( token );
             mTokenString->push_back( token );
 
-            if ( Expression( value ) ) {
+            if ( Expression(  ) ) {
               mScanner.PeekToken( token );
               if ( token.mValue == ")" ) {
                 mScanner.GetToken( token );
@@ -1476,7 +2457,7 @@ public:
     return false;
   } // Statement()
 
-  bool Expression( Data& value ) {
+  bool Expression(  ) {
     // basic_expression { ',' basic_expression }
     if ( !Basic_expression() ) {
       return false;  
@@ -1500,7 +2481,7 @@ public:
     return true;
   } // Expression()
 
-  bool Basic_expression( Data& value ) {
+  bool Basic_expression(  ) {
     Token token, idToken;
     int idLine = 0;
     Data value;
@@ -1570,7 +2551,7 @@ public:
       mTokenString->push_back( token );
 
       if ( token.mValue == "(" ) {
-        if ( !Expression( value ) ) {
+        if ( !Expression(  ) ) {
           mScanner.GetToken( token );
           ErrorMsg errorMsg( mScanner.mLine, SYNTACTICAL_ERROR, token.mValue );
           throw errorMsg;
@@ -1637,7 +2618,7 @@ public:
         mScanner.GetToken( token );
         mTokenString->push_back( token );
 
-        if ( !Expression( value ) ) {
+        if ( !Expression(  ) ) {
           mScanner.GetToken( token );
           ErrorMsg errorMsg( mScanner.mLine, SYNTACTICAL_ERROR, token.mValue );
           throw errorMsg;
@@ -1652,7 +2633,7 @@ public:
       } // if
 
       if ( Assignment_Operator( ) ) {
-        if ( Basic_expression( value ) ) {
+        if ( Basic_expression(  ) ) {
           return true;
         } // if
         else {
@@ -1687,7 +2668,7 @@ public:
       mScanner.GetToken( token );
       mTokenString->push_back( token );
 
-      if ( !Expression( value ) ) {
+      if ( !Expression( ) ) {
         mScanner.GetToken( token );
         ErrorMsg errorMsg( mScanner.mLine, SYNTACTICAL_ERROR, token.mValue );
         throw errorMsg;
@@ -1756,8 +2737,8 @@ public:
   bool Assignment_Operator() {
     Token token;
     mScanner.PeekToken( token );
-    if ( token.mValue == "=" || token.mType == TE || token.mType == RE
-         || token.mType == PE || token.mType == ME ) {
+    if ( token.mValue == "=" || token.mType == TE || token.mType == DE
+         || token.mType == RE || token.mType == PE || token.mType == ME ) {
       mScanner.GetToken( token );
       mTokenString->push_back( token );
       return true;
@@ -2226,7 +3207,7 @@ public:
     return true;
   } // Rest_of_maybe_mult_exp()
 
-  bool Unary_exp( Data& value ) {
+  bool Unary_exp(  ) {
     /*
     sign { sign } signed_unary_exp
     | unsigned_unary_exp
@@ -2242,7 +3223,7 @@ public:
 
       } // while
 
-      if ( Signed_unary_exp( value ) ) {
+      if ( Signed_unary_exp(  ) ) {
 
         return true;
       } // if
@@ -2274,7 +3255,7 @@ public:
           mScanner.GetToken( token );
           mTokenString->push_back( token );
 
-          if ( Expression( value ) ) {
+          if ( Expression(  ) ) {
             mScanner.PeekToken( token );
             if ( token.mValue == "]" ) {
               mScanner.GetToken( token );
@@ -2303,7 +3284,7 @@ public:
     return false;
   } // Unary_exp()
 
-  bool Signed_unary_exp( Data& value ) {
+  bool Signed_unary_exp(  ) {
   /*
      Identifier [ '(' [ actual_parameter_list ] ')'
                   |
@@ -2346,7 +3327,7 @@ public:
       else if ( token.mValue == "[" ) {
         mScanner.GetToken( token );
         mTokenString->push_back( token );
-        if ( Expression( value ) ) {
+        if ( Expression(  ) ) {
           mScanner.PeekToken( token );
           if ( token.mValue == "]" ) {
             mScanner.GetToken( token );
@@ -2371,7 +3352,7 @@ public:
       mScanner.GetToken( token );
       mTokenString->push_back( token );
 
-      if ( Expression( value ) ) {
+      if ( Expression(  ) ) {
         mScanner.PeekToken( token );
         if ( token.mValue == ")" ) {
           mScanner.GetToken( token );
@@ -2393,7 +3374,7 @@ public:
     return false;
   } // Signed_unary_exp()
 
-  bool Unsigned_unary_exp( Data& value ) {
+  bool Unsigned_unary_exp(  ) {
     /*    
     Identifier [ '(' [ actual_parameter_list ] ')'
                  |
@@ -2439,7 +3420,7 @@ public:
           mScanner.GetToken( token );
           mTokenString->push_back( token );
 
-          if ( !Expression( value ) ) {
+          if ( !Expression(  ) ) {
             mScanner.GetToken( token );
             ErrorMsg errorMsg( mScanner.mLine, SYNTACTICAL_ERROR, token.mValue );
             throw errorMsg;
@@ -2474,7 +3455,7 @@ public:
       mScanner.GetToken( token );
       mTokenString->push_back( token );
       
-      if ( Expression( value ) ) {
+      if ( Expression(  ) ) {
         mScanner.PeekToken( token );
         if ( token.mValue == ")" ) {
           mScanner.GetToken( token );
@@ -2490,11 +3471,6 @@ public:
 
     return false;
   } // Unsigned_unary_exp()
-  
-  void Eval( vector<Token> tokenStr ) {
-    int i = 0;
-    if ( tokenStr[0].mType == )
-  } // Eval()
 
 }; // class Parser
 
