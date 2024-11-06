@@ -66,7 +66,7 @@ void ReadLine() {
 
 string FloatToStr( float num ) {
   stringstream ss;
-  ss << fixed << setprecision(3) << num;
+  ss << fixed << setprecision( 3 ) << num;
   string str = ss.str();
   return str;
 } // FloatToStr() 
@@ -600,7 +600,7 @@ public:
   } // IsEmpty()
 
   void SetByConstantToken( string token ) {
-    if( token[0] == '\"' ) {
+    if ( token[0] == '\"' ) {
       mType = STRING_TYPE;
       mVal = token.substr( 1, token.size() - 2 );
     } // if
@@ -612,8 +612,8 @@ public:
       mType = BOOL_TYPE;
       mVal = token;
     } // if
-    else if ( isdigit( token[0] ) || token[0] == '.' || token[0] == '-' ) {
-      if ( token.find( '.' ) != string::npos) {
+    else if ( IsDigit( token[0] ) || token[0] == '.' || token[0] == '-' ) {
+      if ( token.find( '.' ) != string::npos ) {
         mType = FLOAT_TYPE;
         float tmp = atof( token.c_str() );
         mVal = FloatToStr( tmp );
@@ -623,7 +623,7 @@ public:
         mVal = token;
       } // else
     } // if
-  } // SetByConstant()
+  } // SetByConstantToken()
 
   Data Plus( Data op2 ) {
     // acceptable type: int, float, string(with anything)
@@ -642,7 +642,8 @@ public:
 
       if ( IsInt( value1 ) ) {
         returnValue.mType = INT_TYPE;
-        returnValue.mVal = IntToStr( (int)value1 ); 
+        int tmpV = ( int ) value1;
+        returnValue.mVal = IntToStr( tmpV ); 
       } // if
       else {
         returnValue.mType = FLOAT_TYPE;
@@ -665,7 +666,8 @@ public:
 
       if ( IsInt( value1 ) ) {
         returnValue.mType = INT_TYPE;
-        returnValue.mVal = IntToStr( (int)value1 ); 
+        int tmpV1 = ( int ) value1;
+        returnValue.mVal = IntToStr( tmpV1 ); 
       } // if
       else {
         returnValue.mType = FLOAT_TYPE;
@@ -691,7 +693,8 @@ public:
     } // if
     else {
       returnValue.mType = INT_TYPE;
-      returnValue.mVal = IntToStr( (int)value1 ); 
+      int tmpV = ( int ) value1;
+      returnValue.mVal = IntToStr( tmpV ); 
     } // else
 
     // returnValue.mVal = mVal * value.mVal;
@@ -709,7 +712,8 @@ public:
 
     if ( IsInt( value1 ) ) {
       returnValue.mType = INT_TYPE;
-      returnValue.mVal = IntToStr( (int)value1 ); 
+      int tmpV = ( int ) value1;
+      returnValue.mVal = IntToStr( tmpV ); 
     } // if
     else {
       returnValue.mType = FLOAT_TYPE;
@@ -729,10 +733,11 @@ public:
     value1 = value1 % value2;
   
     returnValue.mType = INT_TYPE;
-    returnValue.mVal = IntToStr( (int)value1 ); 
+    int tmpv = ( int ) value1;
+    returnValue.mVal = IntToStr( tmpv ); 
 
     return returnValue;
-  } // Div()
+  } // Mod()
 
 }; // Data
 
@@ -800,7 +805,7 @@ public:
       map<string, Data> m = mCallStack->top() ;
       mCallStack->pop();
       if ( m.find( name ) != m.end() ) {
-        m[name].mVal = data.mVal;
+        m[name].mVal = data.mVal; // keep the data type of original identifier, only change the value
       } // if
       else {
         Set( name, data );
@@ -1024,14 +1029,14 @@ class Evaler {
   // eval the token string
 public:
   vector<Token> mTokenStr;
-  int i;
+  int mIndex;
   
   Evaler() {
-    i = 0;
-  } // Evaler
+    mIndex = 0;
+  } // Evaler()
 
   void Statement() {
-    i = 0;
+    mIndex = 0;
     Data value;
     if ( Expression( value ) ) {
       
@@ -1045,13 +1050,11 @@ public:
       return false;
     } // if
 
-    /*
-    while ( mTokenStr[i].mValue == "," ) {
-      i++;
-      Basic_expression();
-
+    while ( mTokenStr[mIndex].mValue == "," ) {
+      mIndex++;
+      Basic_expression( value );
     } // while
-    */
+    
     return true;
   } // Expression()
 
@@ -1059,38 +1062,39 @@ public:
     // value only out?
     string idStr = "", signStr = "";
     
-    if ( mTokenStr[i].mType == ID ) {
+    if ( mTokenStr[mIndex].mType == ID ) {
       // Identifier rest_of_Identifier_started_basic_exp
-      idStr = mTokenStr[i].mValue;
-      i++;
+      idStr = mTokenStr[mIndex].mValue;
+      mIndex++;
       
-      if ( mTokenStr[i].mValue == "[" ) {
+      if ( mTokenStr[mIndex].mValue == "[" ) {
         // [ '[' expression ']' ]
-        i++;
+        mIndex++;
         Data exprVal2;
         Expression( exprVal2 );
 
-        // if ( token.mValue != "]" ) {
-        i++;
+        mIndex++; // if ( token.mValue != "]" ) {
       } // if
 
       if ( idStr == "cout" ) {
-        while ( mTokenStr[i].mType == LS || mTokenStr[i].mType == RS ) {
-          i++;
+        while ( mTokenStr[mIndex].mType == LS || mTokenStr[mIndex].mType == RS ) {
+          mIndex++;
           Maybe_additive_exp( value ) ;
           while ( value.mVal.find( "\\n" ) != string::npos ) {
             value.mVal.replace( value.mVal.find( "\\n" ), 2, "\n" );
           } // while
+
           cout << value.mVal;
         } // while
         
         return true;
       } // if
-      else if ( mTokenStr[i].mValue == "=" || mTokenStr[i].mType == TE || mTokenStr[i].mType == DE
-          || mTokenStr[i].mType == RE || mTokenStr[i].mType == PE || mTokenStr[i].mType == ME ) {
+      else if ( mTokenStr[mIndex].mValue == "=" || mTokenStr[mIndex].mType == TE 
+                || mTokenStr[mIndex].mType == DE || mTokenStr[mIndex].mType == RE 
+                || mTokenStr[mIndex].mType == PE || mTokenStr[mIndex].mType == ME ) {
         // assignment_operator
-        Token assignOp = mTokenStr[i];
-        i++;
+        Token assignOp = mTokenStr[mIndex];
+        mIndex++;
 
         Basic_expression( value );
         
@@ -1117,23 +1121,44 @@ public:
           value = idVal.Minus( value );
         } // if
 
+        // if identifier is int and value is float, cast float to int
+        if ( idVal.mType == INT_TYPE && value.mType == FLOAT_TYPE ) {
+          // idVal.mVal = value.mVal; // what is this for?
+          value.mType = INT_TYPE;
+          value.mVal = IntToStr( (int) atof( value.mVal.c_str() ) );
+
+          // int tmpv = ( int ) round ( atof( value.mVal.c_str() ) );
+          // value.mVal = IntToStr( tmpv );
+
+          // int tmpv2 = ( int ) ( atof( idVal.mVal.c_str() ) );
+          // idVal.mVal = IntToStr( tmpv2 );
+        } // if
+        else {
+          // idVal = value; 
+        } // else
+
+        // gCallStack->Set( idStr, idVal );
         gCallStack->Set( idStr, value );
 
         return true;
-      } // if
+      } // if ( mTokenStr[mIndex].mValue == "="
       else {
+        // ID [ PP | MM ] romce_and_romloe
+        // modify identifier but return not modified value
         gCallStack->Get( idStr, value );
-        Data tmpD;
-        tmpD.SetByConstantToken( "1" );
-        if ( mTokenStr[i].mType == PP ) {
-          value = value.Plus( tmpD ); 
-          gCallStack->Set( idStr, value );
-          i++;
+        
+        Data tempData;
+        tempData.SetByConstantToken( "1" );
+
+        if ( mTokenStr[mIndex].mType == PP ) {
+          tempData = value.Plus( tempData ); 
+          gCallStack->Set( idStr, tempData );
+          mIndex++;
         } // if
-        else if ( mTokenStr[i].mType == MM ) {
-          value = value.Minus( tmpD );
-          gCallStack->Set( idStr, value );
-          i++;
+        else if ( mTokenStr[mIndex].mType == MM ) {
+          tempData = value.Minus( tempData );
+          gCallStack->Set( idStr, tempData );
+          mIndex++;
         } // if
 
         Rest_of_maybe_conditional_exp_and_rest_of_maybe_logical_OR_exp( value );
@@ -1141,16 +1166,16 @@ public:
 
       return true;
     } // if ( mTokenStr[i].mType == ID )
-    else if ( mTokenStr[i].mType == PP || mTokenStr[i].mType == MM ) {
-      i++;
-      if ( mTokenStr[i].mType == ID ) {
-        idStr = mTokenStr[i].mValue;
-        i++;
+    else if ( mTokenStr[mIndex].mType == PP || mTokenStr[mIndex].mType == MM ) {
+      mIndex++;
+      if ( mTokenStr[mIndex].mType == ID ) {
+        idStr = mTokenStr[mIndex].mValue;
+        mIndex++;
 
         gCallStack->Get( idStr, value );
         Data tmpD;
         tmpD.SetByConstantToken( "1" );
-        if ( mTokenStr[i-2].mType == PP ) {
+        if ( mTokenStr[mIndex-2].mType == PP ) {
           value = value.Plus( tmpD );
           gCallStack->Set( idStr, value );
         } // if
@@ -1161,12 +1186,12 @@ public:
         
         // [ '[' expression ']' ] romce_and_romloe
         Data exprVal2;
-        if ( mTokenStr[i].mValue == "[" ) {
-          i++;
+        if ( mTokenStr[mIndex].mValue == "[" ) {
+          mIndex++;
 
           Expression( exprVal2 );
 
-          i++; // if ( token.mValue == "]" ) {
+          mIndex++; // if ( token.mValue == "]" ) {
 
           return true;
         } // if
@@ -1183,12 +1208,7 @@ public:
 
       } // while
 
-      if ( Signed_unary_exp( value )  ) {
-
-      } // if
-      else if ( Rest_of_maybe_conditional_exp_and_rest_of_maybe_logical_OR_exp( value ) ) {
-
-      } // if
+      Signed_unary_exp( value ) ;    
 
       if ( signStr == "!" ) {
         if ( value.mVal == "true" ) {
@@ -1202,24 +1222,26 @@ public:
         Data tmpD;
         tmpD.SetByConstantToken( "-1" );
         value = value.Mul( tmpD ); 
-      } // if
+      } // if  
+
+      Rest_of_maybe_conditional_exp_and_rest_of_maybe_logical_OR_exp( value );
 
       return true;
     } // if
-    else if ( mTokenStr[i].mType == CONSTANT || mTokenStr[i].mValue == "(" ) {
+    else if ( mTokenStr[mIndex].mType == CONSTANT || mTokenStr[mIndex].mValue == "(" ) {
       // ( Constant | '(' expression ')' ) romce_and_romloe
-      if ( mTokenStr[i].mValue == "(" ) {
-        i++;
+      if ( mTokenStr[mIndex].mValue == "(" ) {
+        mIndex++;
 
         Expression( value );
 
         // if ( tokenStr[i].mValue == ")" ) {
-        i++;
+        mIndex++;
 
       } // if ( token.mValue == "(" )
       else {
-        value.SetByConstantToken( mTokenStr[i].mValue );
-        i++;
+        value.SetByConstantToken( mTokenStr[mIndex].mValue );
+        mIndex++;
       } // else
 
       Rest_of_maybe_conditional_exp_and_rest_of_maybe_logical_OR_exp( value ) ;
@@ -1230,8 +1252,9 @@ public:
   } // Basic_expression()
 
   bool Sign( string& signStr ) {
-    if ( mTokenStr[i].mValue == "+" || mTokenStr[i].mValue == "-" || mTokenStr[i].mValue == "!" ) {
-      if (  mTokenStr[i].mValue == "-" ) {
+    if ( mTokenStr[mIndex].mValue == "+" || mTokenStr[mIndex].mValue == "-" 
+         || mTokenStr[mIndex].mValue == "!" ) {
+      if (  mTokenStr[mIndex].mValue == "-" ) {
         if ( signStr == "-" ) {
           signStr = "+";
         } // if
@@ -1239,21 +1262,19 @@ public:
           signStr = "-";
         } // else
       } // if
-      else if ( signStr == "!" && mTokenStr[i].mValue == "!" ) {
+      else if ( signStr == "!" && mTokenStr[mIndex].mValue == "!" ) {
         signStr = "";
       } // if
       else if ( signStr == "" ) {
-        signStr = mTokenStr[i].mValue;
-      } // else
+        signStr = mTokenStr[mIndex].mValue;
+      } // if
 
-      i++;
+      mIndex++;
       return true;
     } // if
     
     return false;
   } // Sign()
-
-  
 
   bool Rest_of_maybe_conditional_exp_and_rest_of_maybe_logical_OR_exp( Data& value ) {
     //  rest_of_maybe_logical_OR_exp [ '?' basic_expression ':' basic_expression ]
@@ -1261,20 +1282,20 @@ public:
       return false;
     } // if
 
-    Data bExprVal1, bExprVal2;
-    if ( mTokenStr[i].mValue == "?" ) {
-      i++;
-
-      if ( Basic_expression( bExprVal1 ) ) {
-
-        if ( mTokenStr[i].mValue == ":" ) {
-          i++;
-
-          if ( Basic_expression( bExprVal2 ) ) {
-            return true;
-          } // if
-        } // if
+    if ( mTokenStr[mIndex].mValue == "?" ) {
+      mIndex++;
+      if ( value.mVal == "true" ) {
+        Basic_expression( value );
+        mIndex++; // skip ':'
       } // if
+      else {
+        while ( mTokenStr[mIndex].mValue != ":" ) {
+          mIndex++;
+        } // while
+
+        mIndex++; // skip ':'
+        Basic_expression( value );
+      } // else
     } // if ( token.mValue == "?" )
 
     return true;
@@ -1287,12 +1308,24 @@ public:
     } // if
 
     Data value2;
-    while ( mTokenStr[i].mType == OR ) {
-      i++;
-
+    while ( mTokenStr[mIndex].mType == OR ) {
+      mIndex++;
       Maybe_logical_AND_exp( value2 );
         
+      bool b1 = false, b2 = false;
+      if ( value.mVal == "true" ) {
+        b1 = true;
+      } // if
+      
+      if ( value2.mVal == "true" ) {
+        b2 = true;
+      } // if
 
+      value.mType = BOOL_TYPE;
+      value.mVal = "false";
+      if ( b1 || b2 ) {
+        value.mVal = "true";
+      } // if
     } // while
 
     return true;
@@ -1305,10 +1338,25 @@ public:
     } // if
 
     Data value2;
-    while ( mTokenStr[i].mType == AND ) {
-      i++;
+    while ( mTokenStr[mIndex].mType == AND ) {
+      mIndex++;
       
       Maybe_bit_OR_exp( value2 );
+
+      bool b1 = false, b2 = false;
+      if ( value.mVal == "true" ) {
+        b1 = true;
+      } // if
+      
+      if ( value2.mVal == "true" ) {
+        b2 = true;
+      } // if
+
+      value.mType = BOOL_TYPE;
+      value.mVal = "false";
+      if ( b1 && b2 ) {
+        value.mVal = "true";
+      } // if
     } // while
 
     return true;
@@ -1320,10 +1368,24 @@ public:
     } // if
 
     Data value2;
-    while ( mTokenStr[i].mType == AND ) {
-      i++;
-
+    while ( mTokenStr[mIndex].mType == AND ) {
+      mIndex++;
       Maybe_bit_OR_exp( value2 ) ;
+
+      bool b1 = false, b2 = false;
+      if ( value.mVal == "true" ) {
+        b1 = true;
+      } // if
+      
+      if ( value2.mVal == "true" ) {
+        b2 = true;
+      } // if
+
+      value.mType = BOOL_TYPE;
+      value.mVal = "false";
+      if ( b1 && b2 ) {
+        value.mVal = "true";
+      } // if
     } // while
 
     return true;
@@ -1335,10 +1397,11 @@ public:
     } // if
 
     Data value2;
-    while ( mTokenStr[i].mValue == "|" ) {
-      i++;
-
+    while ( mTokenStr[mIndex].mValue == "|" ) {
+      mIndex++;
       Maybe_bit_ex_OR_exp( value2 ) ;
+      // int tmpv = ( atoi( value.mVal.c_str() ) | atoi( value2.mVal.c_str() ) );
+      // value.mVal = IntToStr( tmpv );
     } // while
 
     return true;
@@ -1350,11 +1413,11 @@ public:
     } // if
 
     Data value2;
-    while ( mTokenStr[i].mValue == "|" ) {
-      i++;
-
-     Maybe_bit_ex_OR_exp( value2 );
-
+    while ( mTokenStr[mIndex].mValue == "|" ) {
+      mIndex++;
+      Maybe_bit_ex_OR_exp( value2 );
+      // int tmpv = ( atoi( value.mVal.c_str() ) | atoi( value2.mVal.c_str() ) );
+      // value.mVal = IntToStr( tmpv );
     } // while
 
     return true;
@@ -1366,11 +1429,11 @@ public:
     } // if
 
     Data value2;
-    while ( mTokenStr[i].mValue == "^" ) {
-      i++;
-
+    while ( mTokenStr[mIndex].mValue == "^" ) {
+      mIndex++;
       Maybe_bit_AND_exp( value2 );
-
+      // int tmpv = ( atoi( value.mVal.c_str() ) ^ atoi( value2.mVal.c_str() ) );
+      // value.mVal = IntToStr( tmpv );
     } // while
 
     return true;
@@ -1382,11 +1445,11 @@ public:
     } // if
 
     Data value2;
-    while ( mTokenStr[i].mValue == "^" ) {
-      i++;
-
+    while ( mTokenStr[mIndex].mValue == "^" ) {
+      mIndex++;
       Maybe_bit_AND_exp( value2 );
-
+      // int tmpv = ( atoi( value.mVal.c_str() ) ^ atoi( value2.mVal.c_str() ) );
+      // value.mVal = IntToStr( tmpv );
     } // while
 
     return true;
@@ -1398,12 +1461,12 @@ public:
     } // if
 
     Data value2;
-    while ( mTokenStr[i].mValue == "&" ) {
-      i++;
+    while ( mTokenStr[mIndex].mValue == "&" ) {
+      mIndex++;
 
       Maybe_equality_exp( value2 ) ;
-
-   
+      // int tmpv = ( atoi( value.mVal.c_str() ) & atoi( value2.mVal.c_str() ) );
+      // value.mVal = IntToStr( tmpv );
     } // while
 
     return true;
@@ -1415,11 +1478,12 @@ public:
     } // if
 
     Data value2;
-    while ( mTokenStr[i].mValue == "&" ) {
-      i++;
+    while ( mTokenStr[mIndex].mValue == "&" ) {
+      mIndex++;
 
       Maybe_equality_exp( value2 ) ;
-  
+      // int tmpv = ( atoi( value.mVal.c_str() ) & atoi( value2.mVal.c_str() ) );
+      // value.mVal = IntToStr( tmpv );
 
     } // while
 
@@ -1432,11 +1496,31 @@ public:
     } // if
 
     Data value2;
-    while ( mTokenStr[i].mType == EQ || mTokenStr[i].mType == NEQ ) {
-      i++;
-      Maybe_relational_exp( value2 ) ;
+    while ( mTokenStr[mIndex].mType == EQ || mTokenStr[mIndex].mType == NEQ ) {
+      if ( mTokenStr[mIndex].mType == EQ ) {
+        mIndex++;
+        Maybe_relational_exp( value2 ) ;
 
-    
+        value.mType = BOOL_TYPE;
+        if ( value.mVal == value2.mVal ) {
+          value.mVal = "true";
+        } // if
+        else {
+          value.mVal =  "false";
+        } // else
+      } // if
+      else {
+        mIndex++;
+        Maybe_relational_exp( value2 ) ;
+
+        value.mType = BOOL_TYPE;
+        if ( value.mVal != value2.mVal ) {
+          value.mVal = "true";
+        } // if
+        else {
+          value.mVal =  "false";
+        } // else
+      } // else
     } // while
 
     return true;
@@ -1448,12 +1532,31 @@ public:
     } // if
 
     Data value2;
-    while ( mTokenStr[i].mType == EQ || mTokenStr[i].mType == NEQ ) {
-      i++;
+    while ( mTokenStr[mIndex].mType == EQ || mTokenStr[mIndex].mType == NEQ ) {
+      if ( mTokenStr[mIndex].mType == EQ ) {
+        mIndex++;
+        Maybe_relational_exp( value2 ) ;
 
-      Maybe_relational_exp( value2 ) ;
+        value.mType = BOOL_TYPE;
+        if ( value.mVal == value2.mVal ) {
+          value.mVal = "true";
+        } // if
+        else {
+          value.mVal =  "false";
+        } // else
+      } // if
+      else {
+        mIndex++;
+        Maybe_relational_exp( value2 ) ;
 
-   
+        value.mType = BOOL_TYPE;
+        if ( value.mVal != value2.mVal ) {
+          value.mVal = "true";
+        } // if
+        else {
+          value.mVal =  "false";
+        } // else
+      } // else
     } // while
 
     return true;
@@ -1465,13 +1568,64 @@ public:
     } // if
 
     Data value2;
-    while ( mTokenStr[i].mType == LE || mTokenStr[i].mType == GE
-            || mTokenStr[i].mValue == "<" || mTokenStr[i].mValue == ">" ) {
-      i++;
-
-      Maybe_shift_exp( value2 ) ;
-
-     
+    while ( mTokenStr[mIndex].mType == LE || mTokenStr[mIndex].mType == GE
+            || mTokenStr[mIndex].mValue == "<" || mTokenStr[mIndex].mValue == ">" ) {
+      if ( mTokenStr[mIndex].mType == LE ) {
+        mIndex++;
+        Maybe_shift_exp( value2 ) ;
+        if ( value.mType == INT_TYPE || value.mType == FLOAT_TYPE ) {
+          if ( atof( value.mVal.c_str() ) <= atof( value2.mVal.c_str() ) ) {
+            value.mType = BOOL_TYPE;
+            value.mVal = "true";
+          } // if
+          else {
+            value.mType = BOOL_TYPE;
+            value.mVal = "false";
+          } // else
+        } // if
+      } // if
+      else if ( mTokenStr[mIndex].mType == GE ) {
+        mIndex++;
+        Maybe_shift_exp( value2 ) ;
+        if ( value.mType == INT_TYPE || value.mType == FLOAT_TYPE ) {
+          if ( atof( value.mVal.c_str() ) >= atof( value2.mVal.c_str() ) ) {
+            value.mType = BOOL_TYPE;
+            value.mVal = "true";
+          } // if
+          else {
+            value.mType = BOOL_TYPE;
+            value.mVal = "false";
+          } // else
+        } // if
+      } // if
+      else if ( mTokenStr[mIndex].mValue == "<" ) {
+        mIndex++;
+        Maybe_shift_exp( value2 ) ;
+        if ( value.mType == INT_TYPE || value.mType == FLOAT_TYPE ) {
+          if ( atof( value.mVal.c_str() ) < atof( value2.mVal.c_str() ) ) {
+            value.mType = BOOL_TYPE;
+            value.mVal = "true";
+          } // if
+          else {
+            value.mType = BOOL_TYPE;
+            value.mVal = "false";
+          } // else
+        } // if
+      } // if
+      else if ( mTokenStr[mIndex].mValue == ">" ) {
+        mIndex++;
+        Maybe_shift_exp( value2 ) ;
+        if ( value.mType == INT_TYPE || value.mType == FLOAT_TYPE ) {
+          if ( atof( value.mVal.c_str() ) > atof( value2.mVal.c_str() ) ) {
+            value.mType = BOOL_TYPE;
+            value.mVal = "true";
+          } // if
+          else {
+            value.mType = BOOL_TYPE;
+            value.mVal = "false";
+          } // else
+        } // if
+      } // if
     } // while
 
     return true;
@@ -1483,13 +1637,64 @@ public:
     } // if
 
     Data value2;
-    while ( mTokenStr[i].mType == LE || mTokenStr[i].mType == GE
-            || mTokenStr[i].mValue == "<" || mTokenStr[i].mValue == ">" ) {
-      i++;
-
-      Maybe_shift_exp( value2 ) ;
-
-    
+    while ( mTokenStr[mIndex].mType == LE || mTokenStr[mIndex].mType == GE
+            || mTokenStr[mIndex].mValue == "<" || mTokenStr[mIndex].mValue == ">" ) {
+      if ( mTokenStr[mIndex].mType == LE ) {
+        mIndex++;
+        Maybe_shift_exp( value2 ) ;
+        if ( value.mType == INT_TYPE || value.mType == FLOAT_TYPE ) {
+          if ( atof( value.mVal.c_str() ) <= atof( value2.mVal.c_str() ) ) {
+            value.mType = BOOL_TYPE;
+            value.mVal = "true";
+          } // if
+          else {
+            value.mType = BOOL_TYPE;
+            value.mVal = "false";
+          } // else
+        } // if
+      } // if
+      else if ( mTokenStr[mIndex].mType == GE ) {
+        mIndex++;
+        Maybe_shift_exp( value2 ) ;
+        if ( value.mType == INT_TYPE || value.mType == FLOAT_TYPE ) {
+          if ( atof( value.mVal.c_str() ) >= atof( value2.mVal.c_str() ) ) {
+            value.mType = BOOL_TYPE;
+            value.mVal = "true";
+          } // if
+          else {
+            value.mType = BOOL_TYPE;
+            value.mVal = "false";
+          } // else
+        } // if
+      } // if
+      else if ( mTokenStr[mIndex].mValue == "<" ) {
+        mIndex++;
+        Maybe_shift_exp( value2 ) ;
+        if ( value.mType == INT_TYPE || value.mType == FLOAT_TYPE ) {
+          if ( atof( value.mVal.c_str() ) < atof( value2.mVal.c_str() ) ) {
+            value.mType = BOOL_TYPE;
+            value.mVal = "true";
+          } // if
+          else {
+            value.mType = BOOL_TYPE;
+            value.mVal = "false";
+          } // else
+        } // if
+      } // if
+      else if ( mTokenStr[mIndex].mValue == ">" ) {
+        mIndex++;
+        Maybe_shift_exp( value2 ) ;
+        if ( value.mType == INT_TYPE || value.mType == FLOAT_TYPE ) {
+          if ( atof( value.mVal.c_str() ) > atof( value2.mVal.c_str() ) ) {
+            value.mType = BOOL_TYPE;
+            value.mVal = "true";
+          } // if
+          else {
+            value.mType = BOOL_TYPE;
+            value.mVal = "false";
+          } // else
+        } // if
+      } // if
     } // while
 
     return true;
@@ -1501,16 +1706,16 @@ public:
     } // if
 
     Data value2;
-    while ( mTokenStr[i].mType == LS || mTokenStr[i].mType == RS ) {
-      if (  mTokenStr[i].mType == LS ) {
+    while ( mTokenStr[mIndex].mType == LS || mTokenStr[mIndex].mType == RS ) {
+      if (  mTokenStr[mIndex].mType == LS ) {
         // <<
-        i++;
+        mIndex++;
         Maybe_additive_exp( value2 );
         value.mVal = IntToStr( atoi( value.mVal.c_str() ) << atoi( value2.mVal.c_str() ) );
       } // if
       else {
         // >>
-        i++;
+        mIndex++;
         Maybe_additive_exp( value2 );
         value.mVal = IntToStr( atoi( value.mVal.c_str() ) >> atoi( value2.mVal.c_str() ) );
       } // else
@@ -1526,16 +1731,16 @@ public:
     } // if
 
     Data value2;
-    while ( mTokenStr[i].mType == LS || mTokenStr[i].mType == RS ) {
-      if (  mTokenStr[i].mType == LS ) {
+    while ( mTokenStr[mIndex].mType == LS || mTokenStr[mIndex].mType == RS ) {
+      if (  mTokenStr[mIndex].mType == LS ) {
         // <<
-        i++;
+        mIndex++;
         Maybe_additive_exp( value2 );
         value.mVal = IntToStr( atoi( value.mVal.c_str() ) << atoi( value2.mVal.c_str() ) );
       } // if
       else {
         // >>
-        i++;
+        mIndex++;
         Maybe_additive_exp( value2 );
         value.mVal = IntToStr( atoi( value.mVal.c_str() ) >> atoi( value2.mVal.c_str() ) );
       } // else
@@ -1550,14 +1755,14 @@ public:
     } // if
 
     Data value2;
-    while ( mTokenStr[i].mValue == "+" || mTokenStr[i].mValue == "-" ) {
-      if ( mTokenStr[i].mValue == "+" ) {
-        i++;
+    while ( mTokenStr[mIndex].mValue == "+" || mTokenStr[mIndex].mValue == "-" ) {
+      if ( mTokenStr[mIndex].mValue == "+" ) {
+        mIndex++;
         Maybe_mult_exp( value2 );
         value = value.Plus( value2 );
       } // if
       else {
-        i++;
+        mIndex++;
         Maybe_mult_exp( value2 );
         value = value.Minus( value2 );
       } // else
@@ -1573,9 +1778,9 @@ public:
 
     Data value2;
     string optr = "";
-    while ( mTokenStr[i].mValue == "+" || mTokenStr[i].mValue == "-" ) {
-      optr = mTokenStr[i].mValue;
-      i++;
+    while ( mTokenStr[mIndex].mValue == "+" || mTokenStr[mIndex].mValue == "-" ) {
+      optr = mTokenStr[mIndex].mValue;
+      mIndex++;
       
       Maybe_mult_exp( value2 );
 
@@ -1584,7 +1789,7 @@ public:
       } // if
       else {
         value = value.Minus( value2 );
-      } // if      
+      } // else    
     } // while
 
     return true;
@@ -1603,10 +1808,10 @@ public:
     string operatorToken = "";
     Data value2;
 
-    while ( mTokenStr[i].mValue == "*" || mTokenStr[i].mValue == "/"
-            || mTokenStr[i].mValue == "%" ) {
-      operatorToken = mTokenStr[i].mValue;
-      i++;
+    while ( mTokenStr[mIndex].mValue == "*" || mTokenStr[mIndex].mValue == "/"
+            || mTokenStr[mIndex].mValue == "%" ) {
+      operatorToken = mTokenStr[mIndex].mValue;
+      mIndex++;
 
       Unary_exp( value2 ) ;
 
@@ -1659,19 +1864,21 @@ public:
     else if ( Unsigned_unary_exp( value ) ) {
       return true;
     } // if
-    else if ( mTokenStr[i].mType == PP || mTokenStr[i].mType == MM ) {
-      Token tmp = mTokenStr[i];
-      i++;
-      if ( mTokenStr[i].mType == ID ) {
-        string idStr = mTokenStr[i].mValue;
-        i++;
-        if ( mTokenStr[i].mValue == "[" ) {
-          i++;
+    else if ( mTokenStr[mIndex].mType == PP || mTokenStr[mIndex].mType == MM ) {
+      // ( PP | MM ) ID [ '[' expression ']' ]
+      Token opToken = mTokenStr[mIndex];
+      mIndex++;
+      if ( mTokenStr[mIndex].mType == ID ) {
+        string idStr = mTokenStr[mIndex].mValue;
+        mIndex++;
+
+        if ( mTokenStr[mIndex].mValue == "[" ) {
+          mIndex++;
           Data exprVal2;
           if ( Expression( exprVal2 ) ) {
             
-            if ( mTokenStr[i].mValue == "]" ) {
-              i++;
+            if ( mTokenStr[mIndex].mValue == "]" ) {
+              mIndex++;
               return true;
             } // if
           } // if
@@ -1681,7 +1888,7 @@ public:
           gCallStack->Get( idStr, value );
           Data tmpD;
           tmpD.SetByConstantToken( "1" );
-          if ( tmp.mType == PP ) {
+          if ( opToken.mType == PP ) {
             value = value.Plus( tmpD );
             gCallStack->Set( idStr, value );
           } // if
@@ -1692,52 +1899,49 @@ public:
 
           return true;
         } // else
-      } // if
-
-    } // if
+      } // if ( mTokenStr[mIndex].mType == ID )
+    } // if ( mTokenStr[mIndex].mType == PP || mTokenStr[mIndex].mType == MM )
 
     return false;
   } // Unary_exp()
 
   bool Signed_unary_exp( Data& value ) {
-    /*
-      Identifier [ '(' [ actual_parameter_list ] ')'
-                    |
-                    '[' expression ']'
-                  ]
-      | Constant
-      | '(' expression ')'
-    */
+  /*
+    Identifier [ '(' [ actual_parameter_list ] ')'
+                  |
+                  '[' expression ']'
+                ]
+    | Constant
+    | '(' expression ')'
+  */
     Data exprVal;
-    if ( mTokenStr[i].mType == ID ) {
-      string idStr = mTokenStr[i].mValue;
-      i++;
-      if ( mTokenStr[i].mValue == "[" ) {
-        i++;
+    if ( mTokenStr[mIndex].mType == ID ) {
+      string idStr = mTokenStr[mIndex].mValue;
+      mIndex++;
+      if ( mTokenStr[mIndex].mValue == "[" ) {
+        mIndex++;
         Expression( exprVal ) ;   
-        i++; // if ( mTokenStr[i].mValue == "]" )
+        mIndex++; // if ( mTokenStr[i].mValue == "]" )
       } // if
       
       gCallStack->Get( idStr, value );
       return true;
     } // if ( mTokenStr[i].mType == ID )
-    else if ( mTokenStr[i].mType == CONSTANT ) {
-      value.SetByConstantToken( mTokenStr[i].mValue );
-      i++;
+    else if ( mTokenStr[mIndex].mType == CONSTANT ) {
+      value.SetByConstantToken( mTokenStr[mIndex].mValue );
+      mIndex++;
       return true;
     } // if
-    else if ( mTokenStr[i].mValue == "(" ) {
-      i++;
+    else if ( mTokenStr[mIndex].mValue == "(" ) {
+      mIndex++;
 
       if ( Expression( value ) ) {
 
-        if ( mTokenStr[i].mValue == ")" ) {
-          i++;
+        if ( mTokenStr[mIndex].mValue == ")" ) {
+          mIndex++;
           return true;
         } // if
       } // if
-
-
     } // else if
 
     return false;
@@ -1753,52 +1957,51 @@ public:
     | '(' expression ')'
     */
     Data exprVal2;
-    if ( mTokenStr[i].mType == ID ) {
+    if ( mTokenStr[mIndex].mType == ID ) {
       string idStr = "";
-      idStr = mTokenStr[i].mValue;
-      i++;
+      idStr = mTokenStr[mIndex].mValue;
+      mIndex++;
 
-      if ( mTokenStr[i].mValue == "[" ) {
-        i++;
+      if ( mTokenStr[mIndex].mValue == "[" ) {
+        mIndex++;
 
         Expression( exprVal2 ) ;
 
-        i++; // if ( token.mValue != "]" ) 
-
+        mIndex++; // if ( token.mValue != "]" ) 
       } // if ( token.mValue == "[" )
 
       gCallStack->Get( idStr, value );
-      if ( mTokenStr[i].mType == PP || mTokenStr[i].mType == MM ) {
+      if ( mTokenStr[mIndex].mType == PP || mTokenStr[mIndex].mType == MM ) {
         Data tmpD;
         tmpD.SetByConstantToken( "1" );
-        if ( mTokenStr[i].mType == PP ) {
+        if ( mTokenStr[mIndex].mType == PP ) {
           value = value.Plus( tmpD ); 
           gCallStack->Set( idStr, value );
-          i++;
+          mIndex++;
         } // if
-        else if ( mTokenStr[i].mType == MM ) {
+        else if ( mTokenStr[mIndex].mType == MM ) {
           value = value.Minus( tmpD );
           gCallStack->Set( idStr, value );
-          i++;
+          mIndex++;
         } // if
         
       } // if 
     
       return true;
     } // if
-    else if ( mTokenStr[i].mType == CONSTANT ) {
-      value.SetByConstantToken( mTokenStr[i].mValue );
-      i++;
+    else if ( mTokenStr[mIndex].mType == CONSTANT ) {
+      value.SetByConstantToken( mTokenStr[mIndex].mValue );
+      mIndex++;
     
       return true;
     } // else if
-    else if ( mTokenStr[i].mValue == "(" ) {
-      i++;
+    else if ( mTokenStr[mIndex].mValue == "(" ) {
+      mIndex++;
       
       if ( Expression( value ) ) {
        
-        if ( mTokenStr[i].mValue == ")" ) {
-          i++;
+        if ( mTokenStr[mIndex].mValue == ")" ) {
+          mIndex++;
           return true;
         } // if
       } // if 
@@ -1814,7 +2017,7 @@ public:
   TokenScanner mScanner;
   vector<Token>* mTokenString;
   int mInstructionNum;
-  Evaler evaler;
+  Evaler mEvaler;
 
   Parser() {
     mTokenString = new vector<Token>();
@@ -1843,8 +2046,8 @@ public:
 
     } // if
     else if ( Statement() ) {
-      evaler.mTokenStr = *mTokenString;
-      evaler.Statement();
+      mEvaler.mTokenStr = *mTokenString;
+      mEvaler.Statement();
       cout << "Statement executed ...\n";
     } // if
     else {
@@ -1871,8 +2074,8 @@ public:
         mScanner.CleanInputAfterCMD();
       } // if
       else if ( Statement() ) {
-        evaler.mTokenStr = *mTokenString;
-        evaler.Statement();
+        mEvaler.mTokenStr = *mTokenString;
+        mEvaler.Statement();
         cout << "Statement executed ...\n";
         mScanner.CleanInputAfterCMD();
       } // if
@@ -2538,7 +2741,14 @@ public:
 
       } // while
 
-      if ( !Signed_unary_exp() || !Rest_of_maybe_conditional_exp_and_rest_of_maybe_logical_OR_exp() ) {
+      if ( !Signed_unary_exp() ) {
+        mScanner.GetToken( token );
+        ErrorMsg errorMsg( mScanner.mLine, SYNTACTICAL_ERROR, token.mValue );
+        throw errorMsg;
+      } // if
+
+      if ( !Rest_of_maybe_conditional_exp_and_rest_of_maybe_logical_OR_exp() ) {
+        mScanner.GetToken( token );
         ErrorMsg errorMsg( mScanner.mLine, SYNTACTICAL_ERROR, token.mValue );
         throw errorMsg;
       } // if
@@ -3506,8 +3716,6 @@ int main() {
         } // if
         else if ( errorMsg.mType == SEMANTIC_ERROR ) {
           cout << " : undefined identifier : \'";
-          
-          
         } // if
 
         cout << errorMsg.mToken + "\'\n";
