@@ -572,9 +572,12 @@ public:
   // value
   string mVal; // string, char, int, float, bool
   vector<string> mBody; // function body or variable '[]' part
+  vector<Data> v; // if data is an array
+  int length; // if data is array, this save length of array
   
   // is variable or function
   bool mIsVar, mIsFunc;
+
 
   Data() {
     Init();
@@ -588,6 +591,7 @@ public:
     mIsVar = false;
     mIsFunc = false;
     mVal = "";
+    length = -1;
   } // Init()
 
   bool IsEmpty() {
@@ -627,11 +631,11 @@ public:
 
   Data Plus( Data op2 ) {
     // acceptable type: int, float, string(with anything)
-    Data returnValue;
+    Data returnData;
     if ( mType == STRING_TYPE || op2.mType == STRING_TYPE ) {
-      returnValue.mType = STRING_TYPE;
+      returnData.mType = STRING_TYPE;
       // float accuracy display problem
-      returnValue.mVal = mVal + op2.mVal;
+      returnData.mVal = mVal + op2.mVal;
     } // if
     else if ( mType == INT_TYPE || mType == FLOAT_TYPE ) {
       float value1 = 0.0, value2 = 0.0;
@@ -640,23 +644,33 @@ public:
       value2 = atof( op2.mVal.c_str() );
       value1 = value1 + value2;
 
-      if ( IsInt( value1 ) ) {
-        returnValue.mType = INT_TYPE;
+      if ( IsInt( value1 ) || ( mType == INT_TYPE && op2.mType == INT_TYPE ) ) {
+        returnData.mType = INT_TYPE;
         int tmpV = ( int ) value1;
-        returnValue.mVal = IntToStr( tmpV ); 
+        returnData.mVal = IntToStr( tmpV ); 
       } // if
       else {
-        returnValue.mType = FLOAT_TYPE;
-        returnValue.mVal = FloatToStr( value1 );
+        returnData.mType = FLOAT_TYPE;
+        returnData.mVal = FloatToStr( value1 );
       } // else
+
+      // if ( IsInt( value1 ) ) {
+      //   returnValue.mType = INT_TYPE;
+      //   int tmpV = ( int ) value1;
+      //   returnValue.mVal = IntToStr( tmpV ); 
+      // } // if
+      // else {
+      //   returnValue.mType = FLOAT_TYPE;
+      //   returnValue.mVal = FloatToStr( value1 );
+      // } // else
     } // if
 
-    return returnValue;
+    return returnData;
   } // Plus()
 
   Data Minus( Data op2 ) {
     // acceptable type: int, float
-    Data returnValue;
+    Data returnData;
     if ( mType == INT_TYPE || mType == FLOAT_TYPE ) {
       float value1 = 0.0, value2 = 0.0;
     
@@ -664,63 +678,82 @@ public:
       value2 = atof( op2.mVal.c_str() );
       value1 = value1 - value2;
 
-      if ( IsInt( value1 ) ) {
-        returnValue.mType = INT_TYPE;
-        int tmpV1 = ( int ) value1;
-        returnValue.mVal = IntToStr( tmpV1 ); 
+      if ( IsInt( value1 ) || ( mType == INT_TYPE && op2.mType == INT_TYPE ) ) {
+        returnData.mType = INT_TYPE;
+        int tmpV = ( int ) value1;
+        returnData.mVal = IntToStr( tmpV ); 
       } // if
       else {
-        returnValue.mType = FLOAT_TYPE;
-        returnValue.mVal = FloatToStr( value1 );
+        returnData.mType = FLOAT_TYPE;
+        returnData.mVal = FloatToStr( value1 );
       } // else
+      // if ( IsInt( value1 ) ) {
+      //   returnData.mType = INT_TYPE;
+      //   int tmpV1 = ( int ) value1;
+      //   returnData.mVal = IntToStr( tmpV1 ); 
+      // } // if
+      // else {
+      //   returnData.mType = FLOAT_TYPE;
+      //   returnData.mVal = FloatToStr( value1 );
+      // } // else
     } // if
 
-    return returnValue;
+    return returnData;
   } // Minus()
 
   Data Mul( Data op2 ) {
     // multiply this instance with the argument( op2 )
-    Data returnValue;
+    Data returnData;
     float value1 = 0.0, value2 = 0.0;
     
     value1 = atof( mVal.c_str() );
     value2 = atof( op2.mVal.c_str() );
     value1 = value1 * value2;
 
-    if ( mType == FLOAT_TYPE || op2.mType == FLOAT_TYPE ) {
-      returnValue.mType = FLOAT_TYPE;
-      returnValue.mVal = FloatToStr( value1 );
+    if ( IsInt( value1 ) || ( mType == INT_TYPE && op2.mType == INT_TYPE ) ) {
+      returnData.mType = INT_TYPE;
+      int tmpV = ( int ) value1;
+      returnData.mVal = IntToStr( tmpV ); 
     } // if
     else {
-      returnValue.mType = INT_TYPE;
-      int tmpV = ( int ) value1;
-      returnValue.mVal = IntToStr( tmpV ); 
+      returnData.mType = FLOAT_TYPE;
+      returnData.mVal = FloatToStr( value1 );
     } // else
 
+    // if ( mType == FLOAT_TYPE || op2.mType == FLOAT_TYPE ) {
+    //   returnValue.mType = FLOAT_TYPE;
+    //   returnValue.mVal = FloatToStr( value1 );
+    // } // if
+    // else {
+    //   returnValue.mType = INT_TYPE;
+    //   int tmpV = ( int ) value1;
+    //   returnValue.mVal = IntToStr( tmpV ); 
+    // } // else
+
     // returnValue.mVal = mVal * value.mVal;
-    return returnValue;
+    return returnData;
   } // Mul()
 
   Data Div( Data op2 ) {
     // divide this instance with the argument( op2 )
-    Data returnValue;
+    Data returnData;
     float value1 = 0.0, value2 = 0.0;
     
     value1 = atof( mVal.c_str() );
     value2 = atof( op2.mVal.c_str() );
     value1 = value1 / value2;
 
-    if ( IsInt( value1 ) ) {
-      returnValue.mType = INT_TYPE;
+    if ( IsInt( value1 ) || ( mType == INT_TYPE && op2.mType == INT_TYPE ) ) {
+      returnData.mType = INT_TYPE;
       int tmpV = ( int ) value1;
-      returnValue.mVal = IntToStr( tmpV ); 
+      returnData.mVal = IntToStr( tmpV ); 
     } // if
     else {
-      returnValue.mType = FLOAT_TYPE;
-      returnValue.mVal = FloatToStr( value1 );
+      returnData.mType = FLOAT_TYPE;
+      returnData.mVal = FloatToStr( value1 );
     } // else
 
-    return returnValue;
+    return returnData;
   } // Div()
 
   Data Mod( Data op2 ) {
@@ -785,82 +818,130 @@ public:
     return false;
   } // IsDefined()
 
-  void Get( string name, Data& data ) {
+  void Get( string name, Data& data, int index ) {
     if ( !mCallStack->empty() ) {
       map<string, Data> m = mCallStack->top() ;
       mCallStack->pop();
       if ( m.find( name ) != m.end() ) {
         data = m[name];
+        if ( index != -1 ) {
+          data = data.v[index];
+        }
       } // if
       else {
-        Get( name, data );
+        Get( name, data, index );
       } // else
 
       mCallStack->push( m );
     } // if
   } // Get()
 
-  void Set( string name, Data& data ) {
+  void Set( string name, Data& data, int index ) {
     if ( !mCallStack->empty() ) {
       map<string, Data> m = mCallStack->top() ;
       mCallStack->pop();
       if ( m.find( name ) != m.end() ) {
-        m[name].mVal = data.mVal; // keep the data type of original identifier, only change the value
+        if ( index == -1 ) {
+          m[name].mVal = data.mVal; // keep the data type of original identifier, only change the value
+        }
+        else {
+          m[name].v[index].mVal = data.mVal;
+        }
       } // if
       else {
-        Set( name, data );
+        Set( name, data, index );
       } // else
 
       mCallStack->push( m );
     } // if
   } // Set()
 
-  void NewID( string token, vector<Token>* tokenStr ) {
-    map<string, Data> m = mCallStack->top();
+  void NewID( string type,  string idName, int arraySize ) {
+    Data data;
+    data.mIsVar = true;
+    data.length = arraySize;
+
+    // d.mType = tokenStr->at( 0 ).mValue;
+    if ( type == "int" ) {
+      data.mType = INT_TYPE;
+    } // if
+    else if ( type == "float" ) {
+      data.mType = FLOAT_TYPE;
+    } // if
+    else if ( type == "bool" ) {
+      data.mType = BOOL_TYPE;
+    } // if
+    else if ( type == "string" ) {
+      data.mType = STRING_TYPE;
+    } // if
+    else if ( type == "char" ) {
+      data.mType = CHAR_TYPE;
+    } // if
+    // else if ( type == "void" ) {
+    //   data.mType = VOID_TYPE;
+    // } // if
+
+    Data tempData = data;
+    tempData.length = -1;
+    for ( int i = 0 ; i < data.length ; i++ ) {
+      data.v.push_back( tempData );
+    }    
+
+    map<string, Data> idTable = mCallStack->top();
     mCallStack->pop();
 
-    Data d;
-    d.mIsVar = true;
-    // d.mType = tokenStr->at( 0 ).mValue;
-    if ( tokenStr->at( 0 ).mValue == "int" ) {
-      d.mType = INT_TYPE;
-    } // if
-    else if ( tokenStr->at( 0 ).mValue == "float" ) {
-      d.mType = FLOAT_TYPE;
-    } // if
-    else if ( tokenStr->at( 0 ).mValue == "bool" ) {
-      d.mType = BOOL_TYPE;
-    } // if
-    else if ( tokenStr->at( 0 ).mValue == "string" ) {
-      d.mType = STRING_TYPE;
-    } // if
-    else if ( tokenStr->at( 0 ).mValue == "char" ) {
-      d.mType = CHAR_TYPE;
-    } // if
-    else if ( tokenStr->at( 0 ).mValue == "void" ) {
-      d.mType = VOID_TYPE;
-    } // if
+    idTable[idName] = data;
 
-    int i = 0;
-    while ( i < tokenStr->size() ) {
-      if ( tokenStr->at( i ).mValue == token ) {
-        i++;
-        while ( i < tokenStr->size() && tokenStr->at( i ).mValue != "," 
-                && tokenStr->at( i ).mValue != ";" ) {
-          d.mBody.push_back( tokenStr->at( i ).mValue );
-          i++;
-        } // while
-
-        i = tokenStr->size();
-      } // if
-
-      i++;
-    } // while
-
-    m[token] = d;
-
-    mCallStack->push( m );
+    mCallStack->push( idTable );
   } // NewID()
+
+  // void NewID( string idName, vector<Token>* tokenStr ) {
+  //   map<string, Data> idTable = mCallStack->top();
+  //   mCallStack->pop();
+
+  //   Data data;
+  //   data.mIsVar = true;
+  //   // d.mType = tokenStr->at( 0 ).mValue;
+  //   if ( tokenStr->at( 0 ).mValue == "int" ) {
+  //     data.mType = INT_TYPE;
+  //   } // if
+  //   else if ( tokenStr->at( 0 ).mValue == "float" ) {
+  //     data.mType = FLOAT_TYPE;
+  //   } // if
+  //   else if ( tokenStr->at( 0 ).mValue == "bool" ) {
+  //     data.mType = BOOL_TYPE;
+  //   } // if
+  //   else if ( tokenStr->at( 0 ).mValue == "string" ) {
+  //     data.mType = STRING_TYPE;
+  //   } // if
+  //   else if ( tokenStr->at( 0 ).mValue == "char" ) {
+  //     data.mType = CHAR_TYPE;
+  //   } // if
+  //   else if ( tokenStr->at( 0 ).mValue == "void" ) {
+  //     data.mType = VOID_TYPE;
+  //   } // if
+
+  //   // find idName in token string then save the following token string until ',' or ';' as identifier's information 
+  //   int i = 0;
+  //   while ( i < tokenStr->size() ) {
+  //     if ( tokenStr->at( i ).mValue == idName ) {
+  //       i++;
+  //       while ( i < tokenStr->size() && tokenStr->at( i ).mValue != "," 
+  //               && tokenStr->at( i ).mValue != ";" ) {
+  //         data.mBody.push_back( tokenStr->at( i ).mValue );
+  //         i++;
+  //       } // while
+
+  //       i = tokenStr->size();
+  //     } // if
+
+  //     i++;
+  //   } // while
+
+  //   idTable[idName] = data;
+
+  //   mCallStack->push( idTable );
+  // } // NewID()
 
   void NewFunc( string token ) {
     map<string, Data> m = mCallStack->top();
@@ -874,37 +955,38 @@ public:
   } // NewFunc()
   
   void NewFunc( string name, vector<Token>* tokenStr ) {
-    map<string, Data> m = mCallStack->top();
+    map<string, Data> idTable = mCallStack->top();
     mCallStack->pop();
-    Data d;
+    Data data;
     
     if ( tokenStr->at( 0 ).mValue == "int" ) {
-      d.mType = INT_TYPE;
+      data.mType = INT_TYPE;
     } // if
     else if ( tokenStr->at( 0 ).mValue == "float" ) {
-      d.mType = FLOAT_TYPE;
+      data.mType = FLOAT_TYPE;
     } // if
     else if ( tokenStr->at( 0 ).mValue == "bool" ) {
-      d.mType = BOOL_TYPE;
+      data.mType = BOOL_TYPE;
     } // if
     else if ( tokenStr->at( 0 ).mValue == "string" ) {
-      d.mType = STRING_TYPE;
+      data.mType = STRING_TYPE;
     } // if
     else if ( tokenStr->at( 0 ).mValue == "char" ) {
-      d.mType = CHAR_TYPE;
+      data.mType = CHAR_TYPE;
     } // if
     else if ( tokenStr->at( 0 ).mValue == "void" ) {
-      d.mType = VOID_TYPE;
+      data.mType = VOID_TYPE;
     } // if
 
-    d.mIsFunc = true;
+    data.mIsFunc = true;
+
     // get function body
     for ( int i = 2 ; i < tokenStr->size() ; i++ ) {
-      d.mBody.push_back( tokenStr->at( i ).mValue );
+      data.mBody.push_back( tokenStr->at( i ).mValue );
     } // for
 
-    m[name] = d;
-    mCallStack->push( m );
+    idTable[name] = data;
+    mCallStack->push( idTable );
   } // NewFunc()
 
   void NewRecord() {
@@ -962,17 +1044,21 @@ public:
 
   void ListVariable( string name ) {
     if ( IsDefined( name ) ) {
-      Data d;
-      Get( name, d );
-      cout << d.mType << " " << name;
-      int indentNum = 0;
-      for ( int i = 0 ; i < d.mBody.size() ; i++ ) {
-        if ( d.mBody.at( i ) != "[" && d.mBody.at( i ) != "(" ) {
-          cout << " ";
-        } // if
+      Data data;
+      Get( name, data, -1 );
+      cout << data.mType << " " << name;
+      if ( data.length != -1 ) {
+        cout << "[ " << data.length << " ]";
+      }
+
+      // int indentNum = 0;
+      // for ( int i = 0 ; i < d.mBody.size() ; i++ ) {
+      //   if ( d.mBody.at( i ) != "[" && d.mBody.at( i ) != "(" ) {
+      //     cout << " ";
+      //   } // if
         
-        cout << d.mBody.at( i );
-      } // for
+      //   cout << d.mBody.at( i );
+      // } // for
 
       cout << " ;\n";
     } // if
@@ -981,7 +1067,7 @@ public:
   void ListFunction( string name ) {
     if ( IsDefined( name ) ) {
       Data d;
-      Get( name, d );
+      Get( name, d, -1 );
       cout << d.mType << " " << name;
       int indentNum = 0;
       bool newLine = false;
@@ -1026,7 +1112,7 @@ public:
 CallStack* gCallStack;
 
 class Evaler {
-  // eval the token string
+  // Evaluate token string
 public:
   vector<Token> mTokenStr;
   int mIndex;
@@ -1061,6 +1147,8 @@ public:
   bool Basic_expression( Data& value ) {
     // value only out?
     string idStr = "", signStr = "";
+    Data exprVal2;
+    int arrayIndex = -1;
     
     if ( mTokenStr[mIndex].mType == ID ) {
       // Identifier rest_of_Identifier_started_basic_exp
@@ -1070,10 +1158,10 @@ public:
       if ( mTokenStr[mIndex].mValue == "[" ) {
         // [ '[' expression ']' ]
         mIndex++;
-        Data exprVal2;
         Expression( exprVal2 );
+        arrayIndex = atoi( exprVal2.mVal.c_str() );
 
-        mIndex++; // if ( token.mValue != "]" ) {
+        mIndex++; // token.mValue == "]"
       } // if
 
       if ( idStr == "cout" ) {
@@ -1099,7 +1187,11 @@ public:
         Basic_expression( value );
         
         Data idVal;
-        gCallStack->Get( idStr, idVal );
+        gCallStack->Get( idStr, idVal, arrayIndex );
+        // if ( arrayIndex != -1 ) {
+        //   idVal =  idVal.v[arrayIndex];
+        // }
+
         if ( assignOp.mType == TE ) {
           // *=
           value = idVal.Mul( value );
@@ -1138,26 +1230,26 @@ public:
         } // else
 
         // gCallStack->Set( idStr, idVal );
-        gCallStack->Set( idStr, value );
+        gCallStack->Set( idStr, value, arrayIndex );
 
         return true;
       } // if ( mTokenStr[mIndex].mValue == "="
       else {
         // ID [ PP | MM ] romce_and_romloe
         // modify identifier but return not modified value
-        gCallStack->Get( idStr, value );
+        gCallStack->Get( idStr, value, arrayIndex );
         
         Data tempData;
         tempData.SetByConstantToken( "1" );
 
         if ( mTokenStr[mIndex].mType == PP ) {
           tempData = value.Plus( tempData ); 
-          gCallStack->Set( idStr, tempData );
+          gCallStack->Set( idStr, tempData, arrayIndex );
           mIndex++;
         } // if
         else if ( mTokenStr[mIndex].mType == MM ) {
           tempData = value.Minus( tempData );
-          gCallStack->Set( idStr, tempData );
+          gCallStack->Set( idStr, tempData, arrayIndex );
           mIndex++;
         } // if
 
@@ -1171,38 +1263,37 @@ public:
       if ( mTokenStr[mIndex].mType == ID ) {
         idStr = mTokenStr[mIndex].mValue;
         mIndex++;
-
-        gCallStack->Get( idStr, value );
-        Data tmpD;
-        tmpD.SetByConstantToken( "1" );
-        if ( mTokenStr[mIndex-2].mType == PP ) {
-          value = value.Plus( tmpD );
-          gCallStack->Set( idStr, value );
-        } // if
-        else {
-          value = value.Minus( tmpD );
-          gCallStack->Set( idStr, value );
-        } // else
         
         // [ '[' expression ']' ] romce_and_romloe
-        Data exprVal2;
+        // Data exprVal2;
         if ( mTokenStr[mIndex].mValue == "[" ) {
           mIndex++;
 
           Expression( exprVal2 );
+          arrayIndex = atoi( exprVal2.mVal.c_str() );
 
           mIndex++; // if ( token.mValue == "]" ) {
 
           return true;
         } // if
 
+        gCallStack->Get( idStr, value, arrayIndex );
+        Data tmpD;
+        tmpD.SetByConstantToken( "1" );
+        if ( mTokenStr[mIndex-2].mType == PP ) {
+          value = value.Plus( tmpD );
+          gCallStack->Set( idStr, value, arrayIndex );
+        } // if
+        else {
+          value = value.Minus( tmpD );
+          gCallStack->Set( idStr, value, arrayIndex );
+        } // else
+
         Rest_of_maybe_conditional_exp_and_rest_of_maybe_logical_OR_exp( value ) ;
           
         return true;
-      } // if
-
-
-    } // if
+      } // if ( mTokenStr[mIndex].mType == ID )
+    } // if ( mTokenStr[mIndex].mType == PP || mTokenStr[mIndex].mType == MM )
     else if ( Sign( signStr ) ) {
       while ( Sign( signStr ) ) {
 
@@ -1872,33 +1963,30 @@ public:
         string idStr = mTokenStr[mIndex].mValue;
         mIndex++;
 
+        Data exprVal2;
+        int arrayIndex = -1;
         if ( mTokenStr[mIndex].mValue == "[" ) {
           mIndex++;
-          Data exprVal2;
-          if ( Expression( exprVal2 ) ) {
+
+          Expression( exprVal2 ); 
+          arrayIndex = atoi( exprVal2.mVal.c_str() );
             
-            if ( mTokenStr[mIndex].mValue == "]" ) {
-              mIndex++;
-              return true;
-            } // if
-          } // if
-
+          mIndex++; // "]"
         } // if ( mTokenStr[i].mValue == "[" )
+        
+        gCallStack->Get( idStr, value, arrayIndex );
+        Data tmpD;
+        tmpD.SetByConstantToken( "1" );
+        if ( opToken.mType == PP ) {
+          value = value.Plus( tmpD );
+          gCallStack->Set( idStr, value, arrayIndex );
+        } // if
         else {
-          gCallStack->Get( idStr, value );
-          Data tmpD;
-          tmpD.SetByConstantToken( "1" );
-          if ( opToken.mType == PP ) {
-            value = value.Plus( tmpD );
-            gCallStack->Set( idStr, value );
-          } // if
-          else {
-            value = value.Minus( tmpD );
-            gCallStack->Set( idStr, value );
-          } // else
-
-          return true;
+          value = value.Minus( tmpD );
+          gCallStack->Set( idStr, value, arrayIndex );
         } // else
+
+        return true;
       } // if ( mTokenStr[mIndex].mType == ID )
     } // if ( mTokenStr[mIndex].mType == PP || mTokenStr[mIndex].mType == MM )
 
@@ -1918,13 +2006,17 @@ public:
     if ( mTokenStr[mIndex].mType == ID ) {
       string idStr = mTokenStr[mIndex].mValue;
       mIndex++;
+      int arrayIndex = -1;
       if ( mTokenStr[mIndex].mValue == "[" ) {
         mIndex++;
-        Expression( exprVal ) ;   
-        mIndex++; // if ( mTokenStr[i].mValue == "]" )
+
+        Expression( exprVal ) ;
+        arrayIndex = atoi( exprVal.mVal.c_str() );
+
+        mIndex++; // mTokenStr[i].mValue == "]"
       } // if
       
-      gCallStack->Get( idStr, value );
+      gCallStack->Get( idStr, value, arrayIndex );
       return true;
     } // if ( mTokenStr[i].mType == ID )
     else if ( mTokenStr[mIndex].mType == CONSTANT ) {
@@ -1962,29 +2054,28 @@ public:
       idStr = mTokenStr[mIndex].mValue;
       mIndex++;
 
+      int arrayIndex = -1;
       if ( mTokenStr[mIndex].mValue == "[" ) {
         mIndex++;
 
         Expression( exprVal2 ) ;
+        arrayIndex = atoi( exprVal2.mVal.c_str() );
 
         mIndex++; // if ( token.mValue != "]" ) 
       } // if ( token.mValue == "[" )
 
-      gCallStack->Get( idStr, value );
+      gCallStack->Get( idStr, value, arrayIndex );
       if ( mTokenStr[mIndex].mType == PP || mTokenStr[mIndex].mType == MM ) {
         Data tmpD;
         tmpD.SetByConstantToken( "1" );
         if ( mTokenStr[mIndex].mType == PP ) {
-          value = value.Plus( tmpD ); 
-          gCallStack->Set( idStr, value );
-          mIndex++;
+          tmpD = value.Plus( tmpD );
         } // if
         else if ( mTokenStr[mIndex].mType == MM ) {
-          value = value.Minus( tmpD );
-          gCallStack->Set( idStr, value );
-          mIndex++;
+          tmpD = value.Minus( tmpD );
         } // if
-        
+        mIndex++; // PP | MM
+        gCallStack->Set( idStr, tmpD, arrayIndex );
       } // if 
     
       return true;
@@ -2013,6 +2104,7 @@ public:
 }; // class Evaler
 
 class Parser {
+  // Generate token list and detect SYNTACTICAL_ERROR
 public:
   TokenScanner mScanner;
   vector<Token>* mTokenString;
@@ -2089,7 +2181,10 @@ public:
   } // User_Input()
 
   bool Definition() {
-    Token token, idToken;
+    //             VOID Identifier function_definition_without_ID
+    // | type_specifier Identifier function_definition_or_declarators
+    Token token;
+    string idType = "";
     bool success = false;
 
     mScanner.PeekToken( token );
@@ -2101,18 +2196,18 @@ public:
       if ( token.mType == ID ) {
         mScanner.GetToken( token );
         mTokenString->push_back( token );
-        idToken = token;
+        // idToken = token;
         
         if ( Function_Definition_Without_ID(  ) ) {
-          if ( gCallStack->IsDefined( idToken.mValue ) ) {
+          if ( gCallStack->IsDefined( token.mValue ) ) {
             cout << "New definition of ";
           } // if
           else {
             cout << "Definition of ";
           } // else
 
-          cout << idToken.mValue << "() entered ...\n";
-          gCallStack->NewFunc( idToken.mValue, mTokenString );
+          cout << token.mValue << "() entered ...\n";
+          gCallStack->NewFunc( token.mValue, mTokenString );
           return true;
         } // if
       } // if
@@ -2121,15 +2216,15 @@ public:
       ErrorMsg errorMsg( mScanner.mLine, SYNTACTICAL_ERROR, token.mValue );
       throw errorMsg;
     } // if
-    else if ( Type_specifier() ) {
+    else if ( Type_specifier( idType ) ) {
       mScanner.PeekToken( token );
       if ( token.mType == ID ) {
         mScanner.GetToken( token );
         mTokenString->push_back( token );
-        idToken = token;
-        queue<string> idQueue;
-        idQueue.push( idToken.mValue );
-        if ( Function_Definition_or_Declarators( idQueue ) ) {
+        // idToken = token;
+        // queue<string> idQueue;
+        // idQueue.push( idToken.mValue );
+        if ( Function_Definition_or_Declarators( idType, token.mValue ) ) {
           return true;
         } // if
       } // if
@@ -2142,47 +2237,51 @@ public:
     return false;
   } // Definition()
 
-  bool Type_specifier() {
+  bool Type_specifier( string &idType ) {
     Token token;
     mScanner.PeekToken( token );
     if ( token.mType == INT || token.mType == FLOAT || token.mType == CHAR
          || token.mType == STRING || token.mType == BOOL ) {
       mScanner.GetToken( token );
       mTokenString->push_back( token );
+      idType = token.mValue;
       return true;
     } // if
 
     return false;
   } // Type_specifier()
 
-  bool Function_Definition_or_Declarators( queue<string>& idQueue ) {
+  bool Function_Definition_or_Declarators( string idType, string idName ) {
+    vector<string> idList; // for multi identifier declaration
+    idList.push_back( idName );
+    vector<int> sizeList;
     if ( Function_Definition_Without_ID() ) {
       // store func
-      if ( gCallStack->IsDefined( idQueue.front() ) ) {
+      if ( gCallStack->IsDefined( idName ) ) {
         cout << "New definition of ";
       } // if
       else {
         cout << "Definition of ";
       } // else
 
-      cout << idQueue.front() << "() entered ...\n";
-      gCallStack->NewFunc( idQueue.front(), mTokenString );
-      idQueue.pop();
+      cout << idName << "() entered ...\n";
+      gCallStack->NewFunc( idName, mTokenString );
+      // idQueue.pop();
       return true;
     } // if
-    else if ( Rest_of_Declarators( idQueue ) ) {
-      while ( !idQueue.empty() ) {            
-        if ( gCallStack->IsDefined( idQueue.front() ) ) {
+    else if ( Rest_of_Declarators( idList, sizeList ) ) {
+      for ( int i = 0 ; i < idList.size() ; i++ ) {            
+        if ( gCallStack->IsDefined( idList[i] ) ) {
           cout << "New definition of ";
         } // if
         else {
           cout << "Definition of ";
         } // else
 
-        cout << idQueue.front() << " entered ...\n";
-        gCallStack->NewID( idQueue.front(), mTokenString );
-        idQueue.pop();
-      } // while
+        cout << idList[i] << " entered ...\n";
+        gCallStack->NewID( idType, idList[i], sizeList[i] );
+        // idQueue.pop();
+      } // for
 
       return true;
     } // if
@@ -2190,7 +2289,7 @@ public:
     return false;
   } // Function_Definition_or_Declarators()
 
-  bool Rest_of_Declarators( queue<string>& idQueue ) {
+  bool Rest_of_Declarators( vector<string> &idList, vector<int> &sizeList ) {
     Token token;
     bool error = false;
 
@@ -2205,6 +2304,8 @@ public:
         mScanner.GetToken( token );
         mTokenString->push_back( token );
 
+        sizeList.push_back( atoi( token.mValue.c_str() ) );
+
         mScanner.PeekToken( token );
         if ( token.mValue == "]" ) {
           mScanner.GetToken( token );
@@ -2218,6 +2319,9 @@ public:
         error = true;
       } // else
     } // if
+    else {
+      sizeList.push_back( -1 );
+    }
 
     if ( error ) {
       mScanner.GetToken( token );
@@ -2240,7 +2344,7 @@ public:
 
       mScanner.GetToken( token );
       mTokenString->push_back( token );
-      idQueue.push( token.mValue );
+      idList.push_back( token.mValue );
 
       // [ '[' Constant ']' ]
       mScanner.PeekToken( token );
@@ -2252,6 +2356,8 @@ public:
         if ( token.mType == CONSTANT ) {
           mScanner.GetToken( token );
           mTokenString->push_back( token );
+
+          sizeList.push_back( atoi( token.mValue.c_str() ) );
 
           mScanner.PeekToken( token );
           if ( token.mValue == "]" ) {
@@ -2266,6 +2372,9 @@ public:
           error = true;
         } // else
       } // if
+      else {
+        sizeList.push_back( -1 );
+      }
 
       if ( error ) {
         mScanner.GetToken( token );
@@ -2328,8 +2437,11 @@ public:
 
   bool Formal_parameter_list() {
     Token token, idToken;
+    string idType = "";
+    int arraySize = -1;
     bool matchFirstToken = false, success = false;
-    if ( Type_specifier() ) {
+
+    if ( Type_specifier( idType ) ) {
       mScanner.PeekToken( token );
       if ( token.mValue == "&" ) {
         mScanner.GetToken( token );
@@ -2357,6 +2469,8 @@ public:
           throw errorMsg;
         } // if
 
+        arraySize = atoi( token.mValue.c_str() );
+
         mScanner.GetToken( token );
         mTokenString->push_back( token );
         if ( token.mValue != "]" ) {
@@ -2364,15 +2478,15 @@ public:
           throw errorMsg;
         } // if
 
-      } // if
+      } // if ( token.mValue == "[" )
 
-      gCallStack->NewID( idToken.mValue, mTokenString );
+      gCallStack->NewID( idType, idToken.mValue, arraySize );
 
       mScanner.PeekToken( token );
       while ( token.mValue == "," ) {
         mScanner.GetToken( token );
         mTokenString->push_back( token );
-        if ( !Type_specifier() ) {
+        if ( !Type_specifier( idType ) ) {
           ErrorMsg errorMsg( mScanner.mLine, SYNTACTICAL_ERROR, token.mValue );
           throw errorMsg;
         } // if
@@ -2391,6 +2505,7 @@ public:
         } // if ( token.mType != ID ) 
 
         idToken = token;
+        arraySize = -1;
 
         mScanner.PeekToken( token );
         if ( token.mValue == "[" ) {
@@ -2404,6 +2519,8 @@ public:
             throw errorMsg;
           } // if
 
+          arraySize = atoi( token.mValue.c_str() );
+
           mScanner.GetToken( token );
           mTokenString->push_back( token );
           if ( token.mValue != "]" ) {
@@ -2412,7 +2529,7 @@ public:
           } // if
         } // if
 
-        gCallStack->NewID( idToken.mValue, mTokenString );
+        gCallStack->NewID( idType, idToken.mValue, arraySize );
 
         mScanner.PeekToken( token );
       } // while
@@ -2450,20 +2567,23 @@ public:
 
   bool Declaration() {
     Token token;
+    string idType = "";
     // type_specifier Identifier rest_of_declarators
-    if ( Type_specifier() ) {
+    if ( Type_specifier( idType ) ) {
       mScanner.PeekToken( token );
       if ( token.mType == ID ) {
         mScanner.GetToken( token );
         mTokenString->push_back( token );
 
-        queue<string> idQueue;
-        idQueue.push( token.mValue );
-        if ( Rest_of_Declarators( idQueue ) ) {
-          while ( !idQueue.empty() ) {
-            gCallStack->NewID( idQueue.front(), mTokenString );
-            idQueue.pop();
-          } // while
+        vector<string> idList;
+        idList.push_back( token.mValue );
+        vector<int> sizeList;
+
+        if ( Rest_of_Declarators( idList, sizeList ) ) {
+          for ( int i = 0 ; i < idList.size() ; i++ ) {
+            gCallStack->NewID( idType, idList[i], sizeList[i] );
+            // idQueue.pop();
+          } 
           
           return true;
         } // if
@@ -3595,7 +3715,7 @@ public:
     */
     Token token, idToken;
     int idLine = 0;
-    Data value;
+    // Data value;
 
     mScanner.PeekToken( token );
     if ( token.mType == ID ) {
@@ -3609,7 +3729,7 @@ public:
         throw errorMsg;
       } // if
 
-      gCallStack->Get( idToken.mValue, value );
+      // gCallStack->Get( idToken.mValue, value );
 
       mScanner.PeekToken( token );
       if ( token.mValue == "(" ) {
@@ -3657,7 +3777,7 @@ public:
       mScanner.GetToken( token );
       mTokenString->push_back( token );
     
-      value.SetByConstantToken( token.mValue );
+      // value.SetByConstantToken( token.mValue );
 
       return true;
     } // else if

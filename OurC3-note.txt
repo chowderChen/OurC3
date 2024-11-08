@@ -12,7 +12,16 @@ operation with constant: type will be the larger type( int < float )
 operation with identifier: ?
 value of expresion about '=' should be the value after casting to identifier
 
+done:
 array not implement yet
+
+relation between lexer, parser, evaler: current state seems ok
+
+mTokenString duplicate:
+    pointer or reference or pass by parameter?
+
+done:
+line 1153 need fix: get/set entire array or one element?
 
 cout << ( a3 = a1 = a2++ + -a3*3/2 ) << "\n" ;
 a1: 15->-77
