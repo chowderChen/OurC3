@@ -93,7 +93,8 @@ enum TokenType {
   TE, DE,             // *= /=
   RE,                 // %=
   PP, MM,             // ++ --
-  RS, LS              // >> <<
+  RS,                 // >>
+  LS                  // <<
 };
 
 enum ErrorType {
@@ -143,6 +144,7 @@ class Token {
 public:
   string mValue;
   TokenType mType;
+  int posNextInstruction;
 
   Token() {
     Init();
@@ -151,6 +153,7 @@ public:
   void Init() {
     mValue = "";
     mType = UNDEFINED_TYPE;
+    posNextInstruction = 0;
   } // Init()
 
   bool IsEmpty() {
@@ -1374,10 +1377,11 @@ public:
     } // if
 
     if ( mTokenStr[mIndex].mValue == "?" ) {
+      int endOfInstruction = mTokenStr[mIndex].posNextInstruction;
       mIndex++;
       if ( value.mVal == "true" ) {
         Basic_expression( value );
-        mIndex++; // skip ':'
+        mIndex = endOfInstruction; // skip ':' and all the others instructions not to run
       } // if
       else {
         while ( mTokenStr[mIndex].mValue != ":" ) {
@@ -3088,6 +3092,7 @@ public:
     if ( token.mValue == "?" ) {
       mScanner.GetToken( token );
       mTokenString->push_back( token );
+      int indexIfToken = mTokenString->size() - 1;
 
       if ( Basic_expression() ) {
         mScanner.PeekToken( token );
@@ -3096,6 +3101,7 @@ public:
           mTokenString->push_back( token );
 
           if ( Basic_expression() ) {
+            mTokenString->at( indexIfToken ).posNextInstruction = mTokenString->size();
             return true;
           } // if
         } // if
