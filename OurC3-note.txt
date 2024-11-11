@@ -31,3 +31,12 @@ a3: 35->-77
 cout << a1-305%a2 << "\n" ; -> -94
 
 what to do when ? a : b, after run a, how to skip b
+fix: save the index of the instruction I want to jump to
+
+implement while and if else: Done
+
+cout << a[1]- - ( a[2]-a3*a[3] ) << "\n" ;
+when calculate on the paper, it's correct
+but using program, value are different by 3
+fix: large float type calculation will have precisio problem that even it acutally calculate int
+     , cause value difference

@@ -641,32 +641,30 @@ public:
       returnData.mVal = mVal + op2.mVal;
     } // if
     else if ( mType == INT_TYPE || mType == FLOAT_TYPE ) {
-      float value1 = 0.0, value2 = 0.0;
-    
-      value1 = atof( mVal.c_str() );
-      value2 = atof( op2.mVal.c_str() );
-      value1 = value1 + value2;
-
-      if ( IsInt( value1 ) || ( mType == INT_TYPE && op2.mType == INT_TYPE ) ) {
+      if ( mType == INT_TYPE && op2.mType == INT_TYPE ) {
+        int value1 = atoi( mVal.c_str() ), value2 = atoi( op2.mVal.c_str() );
+        value1 = value1 + value2;
         returnData.mType = INT_TYPE;
-        int tmpV = ( int ) value1;
-        returnData.mVal = IntToStr( tmpV ); 
-      } // if
+        returnData.mVal = IntToStr( value1 );
+      }
       else {
-        returnData.mType = FLOAT_TYPE;
-        returnData.mVal = FloatToStr( value1 );
-      } // else
+        float value1 = 0.0, value2 = 0.0;
+    
+        value1 = atof( mVal.c_str() );
+        value2 = atof( op2.mVal.c_str() );
+        value1 = value1 + value2;
 
-      // if ( IsInt( value1 ) ) {
-      //   returnValue.mType = INT_TYPE;
-      //   int tmpV = ( int ) value1;
-      //   returnValue.mVal = IntToStr( tmpV ); 
-      // } // if
-      // else {
-      //   returnValue.mType = FLOAT_TYPE;
-      //   returnValue.mVal = FloatToStr( value1 );
-      // } // else
-    } // if
+        if ( IsInt( value1 ) ) {
+          returnData.mType = INT_TYPE;
+          int tmpV = ( int ) value1;
+          returnData.mVal = IntToStr( tmpV ); 
+        } // if
+        else {
+          returnData.mType = FLOAT_TYPE;
+          returnData.mVal = FloatToStr( value1 );
+        } // else
+      } // else
+    } // else if ( mType == INT_TYPE || mType == FLOAT_TYPE )
 
     return returnData;
   } // Plus()
@@ -675,30 +673,29 @@ public:
     // acceptable type: int, float
     Data returnData;
     if ( mType == INT_TYPE || mType == FLOAT_TYPE ) {
-      float value1 = 0.0, value2 = 0.0;
-    
-      value1 = atof( mVal.c_str() );
-      value2 = atof( op2.mVal.c_str() );
-      value1 = value1 - value2;
-
-      if ( IsInt( value1 ) || ( mType == INT_TYPE && op2.mType == INT_TYPE ) ) {
+      if ( mType == INT_TYPE && op2.mType == INT_TYPE ) {
+        int value1 = atoi( mVal.c_str() ), value2 = atoi( op2.mVal.c_str() );
+        value1 = value1 - value2;
         returnData.mType = INT_TYPE;
-        int tmpV = ( int ) value1;
-        returnData.mVal = IntToStr( tmpV ); 
-      } // if
+        returnData.mVal = IntToStr( value1 );
+      }
       else {
-        returnData.mType = FLOAT_TYPE;
-        returnData.mVal = FloatToStr( value1 );
-      } // else
-      // if ( IsInt( value1 ) ) {
-      //   returnData.mType = INT_TYPE;
-      //   int tmpV1 = ( int ) value1;
-      //   returnData.mVal = IntToStr( tmpV1 ); 
-      // } // if
-      // else {
-      //   returnData.mType = FLOAT_TYPE;
-      //   returnData.mVal = FloatToStr( value1 );
-      // } // else
+        float value1 = 0.0, value2 = 0.0;
+    
+        value1 = atof( mVal.c_str() );
+        value2 = atof( op2.mVal.c_str() );
+        value1 = value1 - value2;
+
+        if ( IsInt( value1 ) ) {
+          returnData.mType = INT_TYPE;
+          int tmpV = ( int ) value1;
+          returnData.mVal = IntToStr( tmpV ); 
+        } // if
+        else {
+          returnData.mType = FLOAT_TYPE;
+          returnData.mVal = FloatToStr( value1 );
+        } // else
+      }
     } // if
 
     return returnData;
@@ -707,21 +704,28 @@ public:
   Data Mul( Data op2 ) {
     // multiply this instance with the argument( op2 )
     Data returnData;
-    float value1 = 0.0, value2 = 0.0;
-    
-    value1 = atof( mVal.c_str() );
-    value2 = atof( op2.mVal.c_str() );
-    value1 = value1 * value2;
-
-    if ( IsInt( value1 ) || ( mType == INT_TYPE && op2.mType == INT_TYPE ) ) {
+    if ( mType == INT_TYPE && op2.mType == INT_TYPE ) {
+      int value1 = atoi( mVal.c_str() ), value2 = atoi( op2.mVal.c_str() );
+      value1 = value1 * value2;
       returnData.mType = INT_TYPE;
-      int tmpV = ( int ) value1;
-      returnData.mVal = IntToStr( tmpV ); 
-    } // if
+      returnData.mVal = IntToStr( value1 );
+    }
     else {
-      returnData.mType = FLOAT_TYPE;
-      returnData.mVal = FloatToStr( value1 );
-    } // else
+      float value1 = atof( mVal.c_str() );
+      float value2 = atof( op2.mVal.c_str() );
+      value1 = value1 * value2;
+
+      if ( IsInt( value1 ) ) {
+        returnData.mType = INT_TYPE;
+        int tmpV = ( int ) value1;
+        returnData.mVal = IntToStr( tmpV ); 
+      } // if
+      else {
+        returnData.mType = FLOAT_TYPE;
+        returnData.mVal = FloatToStr( value1 );
+      } // else
+    }
+    
 
     // if ( mType == FLOAT_TYPE || op2.mType == FLOAT_TYPE ) {
     //   returnValue.mType = FLOAT_TYPE;
@@ -740,27 +744,37 @@ public:
   Data Div( Data op2 ) {
     // divide this instance with the argument( op2 )
     Data returnData;
-    float value1 = 0.0, value2 = 0.0;
-    
-    value1 = atof( mVal.c_str() );
-    value2 = atof( op2.mVal.c_str() );
-    value1 = value1 / value2;
-
-    if ( IsInt( value1 ) || ( mType == INT_TYPE && op2.mType == INT_TYPE ) ) {
+    if ( mType == INT_TYPE && op2.mType == INT_TYPE ) {
+      int value1 = atoi( mVal.c_str() ), value2 = atoi( op2.mVal.c_str() );
+      value1 = value1 / value2;
       returnData.mType = INT_TYPE;
-      int tmpV = ( int ) value1;
-      returnData.mVal = IntToStr( tmpV ); 
-    } // if
+      returnData.mVal = IntToStr( value1 );
+    }
     else {
-      returnData.mType = FLOAT_TYPE;
-      returnData.mVal = FloatToStr( value1 );
-    } // else
+      float value1 = 0.0, value2 = 0.0;
+    
+      value1 = atof( mVal.c_str() );
+      value2 = atof( op2.mVal.c_str() );
+      value1 = value1 / value2;
+
+      if ( IsInt( value1 ) ) {
+        returnData.mType = INT_TYPE;
+        int tmpV = ( int ) value1;
+        returnData.mVal = IntToStr( tmpV ); 
+      } // if
+      else {
+        returnData.mType = FLOAT_TYPE;
+        returnData.mVal = FloatToStr( value1 );
+      } // else
+    }
 
     return returnData;
   } // Div()
 
   Data Mod( Data op2 ) {
     // mod this instance with the argument( op2 )
+    // int % int = int?
+    // in real c++ has special remainder func for float
     Data returnValue;
     int value1 = 0, value2 = 0;
     
@@ -1124,13 +1138,175 @@ public:
     mIndex = 0;
   } // Evaler()
 
-  void Statement() {
-    mIndex = 0;
-    Data value;
-    if ( Expression( value ) ) {
-      
+  bool Type_specifier( string &idType ) {
+    if ( mTokenStr[mIndex].mType == INT || mTokenStr[mIndex].mType == FLOAT || mTokenStr[mIndex].mType == CHAR
+         || mTokenStr[mIndex].mType == STRING || mTokenStr[mIndex].mType == BOOL ) {
+      idType = mTokenStr[mIndex].mValue;
+      mIndex++;
+      return true;
     } // if
-    // else if if, while ...
+
+    return false;
+  } // Type_specifier()
+
+  bool Rest_of_Declarators( vector<string> &idList, vector<int> &sizeList ) {
+
+    // [ '[' Constant ']' ]
+    if ( mTokenStr[mIndex].mValue == "[" ) {
+      mIndex++;
+      
+      sizeList.push_back( atoi( mTokenStr[mIndex].mValue.c_str() ) );
+      mIndex++;
+
+      mIndex++; // token.mValue == "]"   
+    } // if
+    else {
+      sizeList.push_back( -1 );
+    }
+
+    // { ',' Identifier [ '[' Constant ']' ] }
+    while ( mTokenStr[mIndex].mValue == "," ) {
+      mIndex++;
+
+      idList.push_back( mTokenStr[mIndex].mValue );
+      mIndex++;
+
+      // [ '[' Constant ']' ]
+      if ( mTokenStr[mIndex].mValue == "[" ) {
+        mIndex++;
+        
+        sizeList.push_back( atoi( mTokenStr[mIndex].mValue.c_str() ) );
+        mIndex++;
+
+        mIndex++; // token.mValue == "]"   
+      } // if
+      else {
+        sizeList.push_back( -1 );
+      }
+    } // while ( token.mValue == "," )
+
+    if ( mTokenStr[mIndex].mValue == ";" ) {
+      mIndex++;
+      return true;
+    } // if
+
+    return false;
+  } // Rest_of_Declarators()
+
+  bool Compound_statement() {
+    // '{' { declaration | statement } '}'
+    if ( mTokenStr[mIndex].mValue != "{" ) {
+      return false;
+    } // if
+    mIndex++;
+
+    while ( Declaration() || Statement() ) {
+      
+    } // while
+
+    mIndex++; // token.mValue == "}"
+    return true;
+  } // Compound_statement()
+
+  bool Declaration() {
+    // type_specifier Identifier rest_of_declarators
+    string idType = "";
+    if ( !Type_specifier( idType ) ) {
+      return false;
+    } // if ( Type_specifier() )
+    
+    vector<string> idList;
+    idList.push_back( mTokenStr[mIndex].mValue );
+    vector<int> sizeList;
+    mIndex++;
+
+    Rest_of_Declarators( idList, sizeList );
+    for ( int i = 0 ; i < idList.size() ; i++ ) {
+      gCallStack->NewID( idType, idList[i], sizeList[i] );
+    } 
+      
+    return true;
+  } // Declaration()
+
+  bool Statement() {
+    // mIndex = 0;
+    Data value;
+    if ( mTokenStr[mIndex].mValue == ";" ) {
+      mIndex++;
+      return true;
+    }
+    else if ( Expression( value ) ) {
+      mIndex++; // ;
+      return true;
+    } // if
+    else if ( Compound_statement() ) {
+      return true;
+    }
+    else if ( mTokenStr[mIndex].mType == IF ) {
+      // IF '(' expression ')' statement [ ELSE statement ]
+      int jumpInstructionPos = mTokenStr[mIndex].posNextInstruction;
+      mIndex++;
+      mIndex++; // "("
+      Expression( value );
+      mIndex++; // )
+      gCallStack->NewRecord();
+      if ( value.mType == BOOL_TYPE && value.mVal == "true" ) {
+        Statement();
+        if ( mTokenStr[mIndex].mType == ELSE ) {
+          mIndex = mTokenStr[ mIndex ].posNextInstruction;
+        }
+      }
+      else {
+        mIndex = jumpInstructionPos;
+        if ( mTokenStr[mIndex].mType == ELSE ) {
+          mIndex++;
+          Statement();
+        }
+      }
+      gCallStack->PopRecord();
+      return true;
+    }
+    else if ( mTokenStr[mIndex].mType == WHILE ) {
+      int indexWhile = mIndex;
+      mIndex++;
+      mIndex++; // (
+      Expression( value );
+      mIndex++; // )
+      while ( value.mType == BOOL_TYPE && value.mVal == "true" ) {
+        gCallStack->NewRecord();
+        Statement();
+        gCallStack->PopRecord();
+        mIndex = indexWhile;
+        mIndex++; // while
+        mIndex++; // (
+        Expression( value );
+        mIndex++; // )
+
+      }
+      mIndex = mTokenStr[indexWhile].posNextInstruction;
+      return true;
+    }
+    else if ( mTokenStr[mIndex].mType == DO ) {
+      int indexDo = mIndex;
+      mIndex++;
+      gCallStack->NewRecord();
+      Statement();
+      gCallStack->PopRecord();
+      mIndex = mIndex + 2; // while ( 
+      Expression( value );
+      while ( value.mType == BOOL_TYPE && value.mVal == "true" ) {
+        mIndex = indexDo;
+        mIndex++; // DO
+        gCallStack->NewRecord();
+        Statement();
+        gCallStack->PopRecord();
+        mIndex = mIndex + 2; // while ( 
+        Expression( value );
+      }
+      mIndex = mIndex + 2; // ) ;
+      return true;
+    }
+    return false;
   } // Statement()
 
   bool Expression( Data& value ) {
@@ -1379,14 +1555,12 @@ public:
     if ( mTokenStr[mIndex].mValue == "?" ) {
       int endOfInstruction = mTokenStr[mIndex].posNextInstruction;
       mIndex++;
-      if ( value.mVal == "true" ) {
+      if ( value.mType == BOOL_TYPE && value.mVal == "true" ) {
         Basic_expression( value );
-        mIndex = endOfInstruction; // skip ':' and all the others instructions not to run
+        mIndex = mTokenStr[mIndex].posNextInstruction; // skip ':' and all the others instructions not to run
       } // if
       else {
-        while ( mTokenStr[mIndex].mValue != ":" ) {
-          mIndex++;
-        } // while
+        mIndex = endOfInstruction;
 
         mIndex++; // skip ':'
         Basic_expression( value );
@@ -2143,6 +2317,7 @@ public:
     } // if
     else if ( Statement() ) {
       mEvaler.mTokenStr = *mTokenString;
+      mEvaler.mIndex = 0;
       mEvaler.Statement();
       cout << "Statement executed ...\n";
     } // if
@@ -2171,6 +2346,7 @@ public:
       } // if
       else if ( Statement() ) {
         mEvaler.mTokenStr = *mTokenString;
+        mEvaler.mIndex = 0;
         mEvaler.Statement();
         cout << "Statement executed ...\n";
         mScanner.CleanInputAfterCMD();
@@ -2643,6 +2819,7 @@ public:
       mScanner.GetToken( token );
       mTokenString->push_back( token );
       firstTokenMatch = true;
+      int indexIF = mTokenString->size() - 1;
 
       mScanner.PeekToken( token );
       if ( token.mValue == "(" ) {
@@ -2656,16 +2833,20 @@ public:
             mTokenString->push_back( token );
 
             if ( Statement() ) {
+              mTokenString->at( indexIF ).posNextInstruction = mTokenString->size();
+
               mScanner.PeekToken( token );
               if ( token.mType == ELSE ) {
                 mScanner.GetToken( token );
                 mTokenString->push_back( token );
+                int indexELSE = mTokenString->size() - 1;
 
                 if ( !Statement() ) {
                   mScanner.GetToken( token );
                   ErrorMsg errorMsg( mScanner.mLine, SYNTACTICAL_ERROR, token.mValue );
                   throw errorMsg;
                 } // if
+                mTokenString->at( indexELSE ).posNextInstruction = mTokenString->size();
               } // if ( token.mType == ELSE )
               
               success = true;
@@ -2679,6 +2860,7 @@ public:
       firstTokenMatch = true;
       mScanner.GetToken( token );
       mTokenString->push_back( token );
+      int indexWHILE = mTokenString->size() - 1;
 
       mScanner.PeekToken( token );
       if ( token.mValue == "(" ) {
@@ -2693,6 +2875,7 @@ public:
 
             if ( Statement() ) {
               success = true;
+              mTokenString->at( indexWHILE ).posNextInstruction = mTokenString->size();
             } // if
           } // if
         } // if
@@ -2732,7 +2915,7 @@ public:
           } // if
         } // if
       } // if
-    } // if
+    } // if ( token.mType == DO )
     else {
       gCallStack->NewRecord();
       if ( Compound_statement() ) {
@@ -3095,13 +3278,16 @@ public:
       int indexIfToken = mTokenString->size() - 1;
 
       if ( Basic_expression() ) {
+        mTokenString->at( indexIfToken ).posNextInstruction = mTokenString->size();
+        
         mScanner.PeekToken( token );
         if ( token.mValue == ":" ) {
           mScanner.GetToken( token );
           mTokenString->push_back( token );
+          int indexColon = mTokenString->size() - 1;
 
           if ( Basic_expression() ) {
-            mTokenString->at( indexIfToken ).posNextInstruction = mTokenString->size();
+            mTokenString->at( indexColon ).posNextInstruction = mTokenString->size();
             return true;
           } // if
         } // if
