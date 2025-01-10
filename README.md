@@ -13,5 +13,5 @@ A simplified C interpreter Written in C++ with standard libraries only.
 - Built-in functions to display user-defined variables and functions
 
 # Techniques
-- Recursive Descent Parsing
+- Recursive Descent Parsing through simplified C EBNF syntax.
 - Call stack simulation
