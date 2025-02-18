@@ -1,6 +1,6 @@
 # OurC Interpreter
 
-A simplified C interpreter Written in C++ with standard libraries only.
+A simplified C interpreter written in C++ depends only on standard libraries.
 
 # Features
 - Lexical and syntax analysis for simplified C syntax
